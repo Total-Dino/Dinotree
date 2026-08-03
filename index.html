@@ -12,9 +12,10 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
 #header h1{font-size:20px;letter-spacing:3px;color:#00ff00}
 #header p{font-size:10px;opacity:.5;letter-spacing:1px;margin-top:1px}
 #header a{color:#00aa00;text-decoration:none}
-#input-row{display:flex;flex-direction:column;gap:5px;flex-shrink:0;order:2;position:sticky;top:0;z-index:25;background:#000;padding-top:2px}
-#btn-row{display:flex;gap:6px;flex-shrink:0;order:3}
-#guess-input{width:100%;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:20px;outline:none}
+#input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0;order:2;position:sticky;top:0;z-index:25;background:#000;padding-top:2px}
+#input-field-wrap{position:relative;flex:1;min-width:0}
+#btn-row{display:flex;gap:6px;flex-shrink:0}
+#guess-input{width:100%;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:20px;outline:none;height:100%;box-sizing:border-box}
 #guess-input:focus{border-color:#00ff00}
 #guess-input::placeholder{color:#003300}
 #suggestions{display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:#000;border:1px solid #00aa00;max-height:38vh;overflow-y:auto;z-index:30;-webkit-overflow-scrolling:touch}
@@ -24,6 +25,7 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
 .sugg-item:active,.sugg-item.active{background:#001a00;color:#00ff00}
 button{background:#000;color:#00ff00;border:1px solid #00aa00;padding:5px 8px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:10px;cursor:pointer;white-space:nowrap}
 button:hover{background:#001a00;border-color:#00ff00}
+#btn-row button{padding:0 10px}
 #status{font-size:11px;color:#005500;flex-shrink:0;display:flex;gap:14px;padding-left:2px;order:4}
 #message{font-size:11px;color:#cc3333;flex-shrink:0;min-height:14px;padding-left:2px;order:5}
 /* Exactly one scroll region: #tree-wrap. Everything else is fixed-height chrome.
@@ -34,15 +36,9 @@ button:hover{background:#001a00;border-color:#00ff00}
    of shrinking anything. */
 #tree-wrap{flex:1;min-height:0;order:6;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 svg{display:block;margin:0 auto}
-@media(pointer:coarse){
-  /* Move Hint/Give Up below the tree so the thumb-reachable zone stays at the bottom */
-  #btn-row{order:7;margin-top:6px}
-  #tree-wrap{order:6}
-}
 @media(pointer:fine){
   /* Search bar looks awkwardly long stretched across a wide monitor */
-  #input-row{max-width:440px;margin:0 auto;width:100%}
-  #btn-row{max-width:440px;margin:0 auto;width:100%}
+  #input-row{max-width:560px;margin:0 auto;width:100%}
 }
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);justify-content:center;align-items:center;z-index:50}
 #overlay.show{display:flex}
@@ -62,12 +58,14 @@ svg{display:block;margin:0 auto}
     <p>A phylogenetic guessing game &mdash; <a href="https://totaldino.com" target="_blank">TotalDino.com</a></p>
   </div>
   <div id="input-row">
-    <input type="text" id="guess-input" placeholder="Enter a dinosaur genus..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-    <div id="suggestions"></div>
-  </div>
-  <div id="btn-row">
-    <button onclick="giveHint()">HINT</button>
-    <button onclick="giveUp()">GIVE UP</button>
+    <div id="input-field-wrap">
+      <input type="text" id="guess-input" placeholder="Enter a dinosaur genus..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div id="suggestions"></div>
+    </div>
+    <div id="btn-row">
+      <button onclick="giveHint()">HINT</button>
+      <button onclick="giveUp()">GIVE UP</button>
+    </div>
   </div>
   <div id="status">
     <span id="s-hints"></span>
@@ -143,7 +141,7 @@ function init() {
   S.target = poolTargets[dateHash(today) % poolTargets.length];
   renderTree(); updateStatus();
   const inputEl = document.getElementById('guess-input');
-  inputEl.addEventListener('keydown', e => { if(e.key==='Enter') { hideSuggestions(); submitGuess(); } });
+  inputEl.addEventListener('keydown', e => { if(e.key==='Enter') { hideSuggestions(); inputEl.blur(); submitGuess(); } });
   inputEl.addEventListener('input', () => showSuggestions(inputEl.value));
   inputEl.addEventListener('blur', () => { setTimeout(hideSuggestions, 150); }); // delay so a tap on a suggestion still registers
   suggBox.addEventListener('mousedown', e => e.preventDefault()); // keep focus/keyboard open through the tap
@@ -171,7 +169,7 @@ function submitGuess() {
   const raw = inp.value.trim(); inp.value = '';
   if (!raw) return;
   const taxon = BY_NAME[raw.toLowerCase()];
-  if (!taxon) { setMsg('"' + raw + '" not found — check spelling.'); return; }
+  if (!taxon) { setMsg('Oops! The entered dinosaur name is invalid. Perhaps you entered a pterosaur, or made a ptypo?'); return; }
   if (S.guesses.find(g => g.name === taxon.name)) { setMsg(taxon.name + ' already guessed.'); return; }
   setMsg('');
   if (taxon.name === S.target.name) {
@@ -613,7 +611,13 @@ function renderTree() {
     if (newYs.length > 0) {
       const newTop = Math.min(...newYs);
       const PAD = 20;
-      treeWrapEl.scrollTo({ top: Math.max(0, newTop - PAD), behavior: 'smooth' });
+      // Small delay: the input was just blurred to dismiss the keyboard,
+      // and that collapse animates over a couple hundred ms — scrolling
+      // right away would still be measuring against the keyboard-up
+      // layout. Waiting lets the scroll land after things settle.
+      setTimeout(() => {
+        treeWrapEl.scrollTo({ top: Math.max(0, newTop - PAD), behavior: 'smooth' });
+      }, 150);
     }
   }
 }
