@@ -49,7 +49,7 @@ svg{display:block;margin:0 auto}
 #overlay.show{display:flex}
 #vbox{border:1px solid #00ff00;background:#000;padding:28px 32px;max-width:380px;width:90%;text-align:center}
 #vbox h2{font-size:20px;margin-bottom:6px;letter-spacing:2px}
-#v-art-wrap{display:none;padding:14px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.28) 0%, rgba(0,255,0,.12) 35%, rgba(0,255,0,0) 70%)}
+#v-art-wrap{display:none;padding:26px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
 #v-art{max-width:100%;max-height:220px;display:block;margin:0 auto}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
@@ -154,6 +154,7 @@ let drawnNodes = null; // tracks which nodes have already been rendered (for ani
 let prevPositions = null; // name -> {x,y,w,h,font} from the last render, for the reposition/resize tween
 let prevVW = null, prevVH = null; // the SVG's own last dimensions — tweened too, so the canvas doesn't snap-resize underneath the smooth node animation
 let activeTweenFinish = null; // if a tween is still running when a new guess comes in, snap it to completion first — otherwise "old" position data would reflect an unfinished animation's target, not what's actually on screen
+let renderGen = 0; // bumped every renderTree() call; any animation frame from an older render aborts immediately, preventing two overlapping tweens from ever both touching the DOM
 
 function dateHash(s) {
   let h = 0;
@@ -471,6 +472,7 @@ function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
 // ── RENDER ───────────────────────────────────────────────────
 function renderTree() {
   if (activeTweenFinish) { activeTweenFinish(); activeTweenFinish = null; }
+  const myGen = ++renderGen;
   const rawRoot = buildUnifiedTree();
   const visRoot = buildVisible(rawRoot);
   const isMobile = window.matchMedia('(pointer: coarse)').matches;
@@ -562,8 +564,23 @@ function renderTree() {
   let edges = '', nodes = '';
   let newChainIdx = 0; // increments once per new edge, in root-to-leaf order
   const tweenNodeQueue = []; // existing nodes whose position/size changed this render
-  const tweenEdgeQueue = []; // existing edges whose endpoints changed this render
+  const tweenEdgeQueue = []; // existing edges whose endpoints (or width) changed this render
   const newEdgeFollowQueue = []; // new edges growing from an existing (possibly still-moving) parent
+
+  const leafCounts = new Map();
+  (function countLeaves(n) {
+    if (n.children.length === 0) { leafCounts.set(n, 1); return 1; }
+    let s = 0;
+    n.children.forEach(c => { s += countLeaves(c); });
+    leafCounts.set(n, s);
+    return s;
+  })(visRoot);
+  const totalLeaves = leafCounts.get(visRoot) || 1;
+  const MIN_EW = 1.6 * bScale, MAX_EW = 7 * bScale;
+  // sqrt compresses the range so a branch doesn't need many guesses under it
+  // to already look reasonably substantial — thickens as more of the tree
+  // grows beneath it, tapering toward single-leaf tips.
+  function edgeWidth(n) { return MIN_EW + (MAX_EW - MIN_EW) * Math.sqrt(leafCounts.get(n) / totalLeaves); }
 
   function draw(n, incomingChainIdx) {
     const x = px(n), y = py(n);
@@ -577,15 +594,18 @@ function renderTree() {
       const chainAttr = chainIdx !== null ? ' data-chain="' + chainIdx + '"' : '';
       const prevChild = (!edgeNew && oldPositions) ? oldPositions.get(c.name) : null;
       const edgeMoved = !edgeNew && prevSelf && prevChild;
+      const curEW = edgeWidth(c);
 
-      // Render moving edges at their OLD shape first (no flash), then tween
-      // to the new one; brand-new edges still grow in via stroke-dashoffset.
+      // Render moving edges at their OLD shape/width first (no flash), then
+      // tween to the new one; brand-new edges grow in via stroke-dashoffset
+      // and just use their final width immediately.
       const ex = edgeMoved ? prevSelf.x : x, ey = edgeMoved ? prevSelf.y : y, enh = edgeMoved ? prevSelf.h : NH;
       const ecx = edgeMoved ? prevChild.x : cx, ecy = edgeMoved ? prevChild.y : cy, ech = edgeMoved ? prevChild.h : NH;
+      const ew = (edgeMoved && prevChild.ew != null) ? prevChild.ew : curEW;
       const emy = (ey + enh/2 + ecy - ech/2) / 2;
-      edges += '<path d="M' + ex + ',' + (ey+enh/2) + ' C' + ex + ',' + emy + ' ' + ecx + ',' + emy + ' ' + ecx + ',' + (ecy-ech/2) + '" class="edge' + (edgeNew ? ' enew' : '') + '"' + chainAttr + ' data-ekey="' + esc(c.name) + '"/>';
+      edges += '<path d="M' + ex + ',' + (ey+enh/2) + ' C' + ex + ',' + emy + ' ' + ecx + ',' + emy + ' ' + ecx + ',' + (ecy-ech/2) + '" style="stroke-width:' + ew.toFixed(2) + '" class="edge' + (edgeNew ? ' enew' : '') + '"' + chainAttr + ' data-ekey="' + esc(c.name) + '"/>';
       if (edgeMoved) {
-        tweenEdgeQueue.push({ key: c.name, prevN: prevSelf, prevC: prevChild, curN: { x, y, h: NH }, curC: { x: cx, y: cy, h: NH } });
+        tweenEdgeQueue.push({ key: c.name, prevN: prevSelf, prevC: prevChild, curN: { x, y, h: NH }, curC: { x: cx, y: cy, h: NH }, prevEW: prevChild.ew != null ? prevChild.ew : curEW, curEW });
       } else if (edgeNew && prevSelf) {
         // The parent already existed (and may itself be mid-tween) — keep
         // this new line's origin glued to the parent's CURRENT position
@@ -633,7 +653,7 @@ function renderTree() {
   const newPositions = new Map();
   function collect(n) {
     drawnNodes.add(n.name);
-    newPositions.set(n.name, { x: px(n), y: py(n), w: nw(labelOf(n)), h: NH, font: FONT });
+    newPositions.set(n.name, { x: px(n), y: py(n), w: nw(labelOf(n)), h: NH, font: FONT, ew: edgeWidth(n) });
     n.children.forEach(collect);
   }
   collect(visRoot);
@@ -748,8 +768,10 @@ function renderTree() {
           const cx = te.prevC.x + (te.curC.x - te.prevC.x) * e;
           const cy = te.prevC.y + (te.curC.y - te.prevC.y) * e;
           const ch = te.prevC.h + (te.curC.h - te.prevC.h) * e;
+          const ew = te.prevEW + (te.curEW - te.prevEW) * e;
           const my = (ny + nh/2 + cy - ch/2) / 2;
           te.pathEl.setAttribute('d', 'M' + nx + ',' + (ny+nh/2) + ' C' + nx + ',' + my + ' ' + cx + ',' + my + ' ' + cx + ',' + (cy-ch/2));
+          te.pathEl.style.strokeWidth = ew.toFixed(2);
         });
         followEdges.forEach(fe => {
           // Parent side tracks its own tween; child side (brand new) is fixed.
@@ -769,7 +791,7 @@ function renderTree() {
       }
 
       function frame(now) {
-        if (stopped) return;
+        if (stopped || myGen !== renderGen) return;
         const raw = Math.min(1, (now - t0) / DURATION);
         apply(ease(raw));
         if (raw < 1) requestAnimationFrame(frame);
