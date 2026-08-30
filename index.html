@@ -83,7 +83,7 @@ svg{display:block;margin:0 auto}
     <h2 id="v-title"></h2>
     <div id="v-art-wrap"><img id="v-art" alt="" /></div>
     <div class="vsub" id="v-sub"></div>
-    <a class="vlink" id="v-link" href="#" target="_blank">VIEW ON TOTAL DINO &rarr;</a><br>
+    <a class="vlink" id="v-link" href="#" target="_blank">LEARN MORE &rarr;</a><br>
     <span class="vcls" onclick="document.getElementById('overlay').classList.remove('show')">&mdash; close &mdash;</span>
   </div>
 </div>
@@ -865,7 +865,7 @@ function showVictory() {
   if (TOTALDINO_PAGES.has(S.target.name)) {
     const slug = S.target.name.toLowerCase().replace(/ /g,'-');
     linkEl.href = 'https://totaldino.com/dino/' + slug;
-    linkEl.textContent = 'VIEW ON TOTAL DINO \u2192';
+    linkEl.textContent = 'LEARN MORE ABOUT ' + S.target.name.toUpperCase() + ' \u2192';
   } else {
     linkEl.href = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(S.target.name);
     linkEl.textContent = 'VIEW ON WIKIPEDIA \u2192';
