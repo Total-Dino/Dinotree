@@ -7,12 +7,18 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe UI",Arial,sans-serif;overflow:hidden;overscroll-behavior:none}
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding:10px 14px 8px;gap:7px;overflow:hidden}
+#app{position:relative;height:100vh;height:100dvh;overflow:hidden}
 #header{text-align:center;flex-shrink:0;order:1}
 #header h1{font-size:20px;letter-spacing:3px;color:#00ff00}
 #header p{font-size:10px;opacity:.5;letter-spacing:1px;margin-top:1px}
 #header a{color:#00aa00;text-decoration:none}
-#input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0;order:2;position:sticky;top:0;z-index:25;background:#000;padding-top:2px}
+/* #topbar floats over #tree-wrap so the tree can occupy the full app
+   height and visually scroll up behind the search bar / hint / give-up
+   buttons instead of being confined to the space left over below them.
+   #tree-wrap gets its padding-top set in JS (positionTreeWrap) to match
+   #topbar's real rendered height. */
+#topbar{position:absolute;top:0;left:0;right:0;z-index:25;background:#000;padding:10px 14px 8px;display:flex;flex-direction:column;gap:7px}
+#input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0}
 #input-field-wrap{position:relative;flex:1;min-width:0}
 #btn-row{display:flex;gap:6px;flex-shrink:0}
 #guess-input{width:100%;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:20px;outline:none;height:100%;box-sizing:border-box}
@@ -34,7 +40,7 @@ button:hover{background:#001a00;border-color:#00ff00}
    matter how many guesses have piled up. Only the layout's own spacing
    (line length) compresses; if it still doesn't fit, this scrolls instead
    of shrinking anything. */
-#tree-wrap{flex:1;min-height:0;order:6;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#tree-wrap{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 14px 8px}
 svg{display:block;margin:0 auto}
 @media(pointer:fine){
   /* Search bar looks awkwardly long stretched across a wide monitor */
@@ -60,22 +66,24 @@ svg{display:block;margin:0 auto}
 </head>
 <body>
 <div id="app">
-  <div id="input-row">
-    <div id="input-field-wrap">
-      <input type="text" id="guess-input" placeholder="Enter a dinosaur genus..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      <div id="suggestions"></div>
-    </div>
-    <div id="btn-row">
-      <button onclick="giveHint()">HINT</button>
-      <button onclick="giveUp()">GIVE UP</button>
-    </div>
-  </div>
-  <div id="status">
-    <span id="s-hints"></span>
-  </div>
-  <div id="message"></div>
   <div id="tree-wrap">
     <svg id="tree-svg" preserveAspectRatio="xMidYMin meet"></svg>
+  </div>
+  <div id="topbar">
+    <div id="input-row">
+      <div id="input-field-wrap">
+        <input type="text" id="guess-input" placeholder="Enter a dinosaur genus..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div id="suggestions"></div>
+      </div>
+      <div id="btn-row">
+        <button onclick="giveHint()">HINT</button>
+        <button onclick="giveUp()">GIVE UP</button>
+      </div>
+    </div>
+    <div id="status">
+      <span id="s-hints"></span>
+    </div>
+    <div id="message"></div>
   </div>
 </div>
 <div id="overlay">
@@ -162,7 +170,23 @@ function dateHash(s) {
   return Math.abs(h);
 }
 
+// #tree-wrap fills the entire #app area (so the tree can scroll behind
+// the topbar); this keeps its top padding in sync with the topbar's
+// actual rendered height so the initial (unscrolled) view still starts
+// just below the search bar / hint / give-up buttons.
+function positionTreeWrap() {
+  const topbarEl = document.getElementById('topbar');
+  const treeWrapEl = document.getElementById('tree-wrap');
+  treeWrapEl.style.paddingTop = topbarEl.offsetHeight + 'px';
+}
+
 function init() {
+  positionTreeWrap();
+  if (window.ResizeObserver) {
+    new ResizeObserver(positionTreeWrap).observe(document.getElementById('topbar'));
+  } else {
+    window.addEventListener('resize', positionTreeWrap);
+  }
   const today = new Date().toISOString().split('T')[0];
   // TARGET_POOL: curated well-known genera; further restricted to only
   // those with a confirmed totaldino.com page, so the daily answer always
@@ -509,7 +533,9 @@ function renderTree() {
   }
 
   const treeWrapEl = document.getElementById('tree-wrap');
-  const availW = treeWrapEl.clientWidth || (isMobile ? 340 : 800);
+  // clientWidth includes tree-wrap's own left/right padding (28px total),
+  // which isn't usable drawing space, so subtract it back out.
+  const availW = (treeWrapEl.clientWidth ? treeWrapEl.clientWidth - 28 : 0) || (isMobile ? 340 : 800);
 
   // Actually runs the real collision-aware layout at a trial compression
   // level and measures the resulting width — this is the true width, not
