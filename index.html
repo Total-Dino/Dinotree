@@ -827,7 +827,7 @@ function renderTree() {
       const ecx = edgeMoved ? prevChild.x : cx, ecy = edgeMoved ? prevChild.y : cy, ech = edgeMoved ? prevChild.h : NH;
       const ew = (edgeMoved && prevChild.ew != null) ? prevChild.ew : curEW;
       const emy = (ey + enh/2 + ecy - ech/2) / 2;
-      edges += '<path d="M' + ex + ',' + (ey+enh/2) + ' C' + ex + ',' + emy + ' ' + ecx + ',' + emy + ' ' + ecx + ',' + (ecy-ech/2) + '" style="stroke-width:' + ew.toFixed(2) + '" class="edge' + (edgeNew ? ' enew' : '') + '"' + chainAttr + ' data-ekey="' + esc(c.name) + '"/>';
+      edges += '<path d="M' + ex + ',' + (ey+enh/2) + ' C' + ex + ',' + emy + ' ' + ecx + ',' + emy + ' ' + ecx + ',' + (ecy-ech/2) + '" style="stroke-width:' + ew.toFixed(2) + '" class="edge' + (edgeNew ? ' enew' : '') + (onTargetPath(c) ? ' epath' : '') + '"' + chainAttr + ' data-ekey="' + esc(c.name) + '"/>';
       if (edgeMoved) {
         tweenEdgeQueue.push({ key: c.name, prevN: prevSelf, prevC: prevChild, curN: { x, y, h: NH }, curC: { x: cx, y: cy, h: NH }, prevEW: prevChild.ew != null ? prevChild.ew : curEW, curEW });
       } else if (edgeNew && prevSelf) {
@@ -844,7 +844,7 @@ function renderTree() {
     const isTip = n.isTarget;
     if      (isTip && S.won)   { bc = 'wn'; tc = 'wt'; }
     else if (isTip && S.over)  { bc = 'ln'; tc = 'lt'; }
-    else if (isTip)            { bc = 'tn'; }
+    else if (isTip)            { bc = 'tn'; tc = 'tt'; }
     else if (n.isLeaf)         { bc = 'bn'; tc = 'bt'; }
     else if (onTargetPath(n))  { bc = 'pn'; }
 
@@ -889,16 +889,18 @@ function renderTree() {
   svg.setAttribute('height', VH);
   svg.innerHTML = '<defs><style>'
     + '.edge{fill:none;stroke:#003800;stroke-width:3}'
+    + '.edge.epath{stroke:#009900}'
     + '.sn{fill:#080808;stroke:#006600;stroke-width:2}'
     + '.pn{fill:#001a00;stroke:#00cc00;stroke-width:2.5}'
     + '.bn{fill:#050505;stroke:#00ff00;stroke-width:1}'
     + '.tn{fill:#001400;stroke:#00ff00;stroke-width:1}'
     + '.wn{fill:#00ff00;stroke:#00ff00;stroke-width:2}'
     + '.ln{fill:#1a0000;stroke:#aa2200;stroke-width:1.5}'
-    + '.st{fill:#009900;font-family:Calibri,"Segoe UI",Arial,sans-serif}'
+    + '.st{fill:#009900;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:600}'
     + '.bt{fill:#006600;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}'
     + '.wt{fill:#000;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold;font-style:italic}'
     + '.lt{fill:#aa2200;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}'
+    + '.tt{fill:#00ff00;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold}'
     + '.nnew{opacity:0}'
     + '</style></defs>' + edges + nodes;
 
