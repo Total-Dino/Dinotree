@@ -57,13 +57,13 @@ svg{display:block;margin:0 auto}
 #vbox{border:1px solid #00ff00;background:#000;padding:28px 32px;max-width:380px;width:90%;text-align:center}
 #vbox h2{font-size:20px;margin-bottom:6px;letter-spacing:2px}
 #v-art-wrap{display:none;padding:26px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
-#v-art{max-width:100%;max-height:220px;display:block;margin:0 auto}
+#v-art{max-width:100%;max-height:220px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
 #vbox a.vlink:hover{background:#001a00}
 .vcls{display:inline-block;margin-top:10px;font-size:11px;color:#004400;cursor:pointer;letter-spacing:1px}
 .vcls:hover{color:#00aa00}
-#clade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);justify-content:center;align-items:center;z-index:60;padding:20px}
+#clade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);justify-content:center;align-items:center;z-index:60;padding:20px}
 #clade-overlay.show{display:flex}
 #clade-box{border:1px solid #00ff00;background:#000;padding:22px 24px;max-width:420px;width:100%;text-align:left}
 #clade-box h2{font-size:16px;letter-spacing:1px;margin-bottom:12px;color:#00ff00;font-style:italic}
@@ -129,8 +129,8 @@ const CLADE_DEFS = {
   "Ornithischia": "Ornithischia (\u201cbird-hipped\u201d dinosaurs) is defined as all dinosaurs more closely related to Triceratops than to birds. Examples include Stegosaurus and Iguanodon.",
   "Theropoda": "Theropoda is defined as all saurischians more closely related to birds (Passer) than to sauropodomorphs such as Cetiosaurus. Examples include Tyrannosaurus and Velociraptor.",
   "Sauropodomorpha": "Sauropodomorpha is defined as all saurischians more closely related to Saltasaurus (a sauropod) than to theropods. Examples include Diplodocus and Plateosaurus.",
-  "Sauropoda": "Sauropoda is defined as the sauropodomorphs more closely related to Saltasaurus than to Plateosaurus \u2014 the huge, quadrupedal, long-necked herbivores. Examples include Brachiosaurus and Diplodocus.",
-  "Averostra": "Averostra is defined as the most recent common ancestor of Ceratosaurus and Allosaurus, and all of its descendants \u2014 uniting Ceratosauria and Tetanurae.",
+  "Sauropoda": "Sauropoda is defined as the sauropodomorphs more closely related to Saltasaurus than to Plateosaurus - the huge, quadrupedal, long-necked herbivores. Examples include Brachiosaurus and Diplodocus.",
+  "Averostra": "Averostra is defined as the most recent common ancestor of Ceratosaurus and Allosaurus, and all of its descendants - uniting Ceratosauria and Tetanurae.",
   "Ceratosauria": "Ceratosauria is defined as the theropods more closely related to Ceratosaurus than to birds. Examples include Ceratosaurus and Carnotaurus.",
   "Tetanurae": "Tetanurae (\u201cstiff tails\u201d) is defined as the theropods more closely related to birds than to Ceratosaurus. Examples include Allosaurus and Tyrannosaurus.",
   "Carnosauria": "Carnosauria is defined as the tetanurans more closely related to Allosaurus than to birds. Examples include Allosaurus and Carcharodontosaurus.",
@@ -146,7 +146,7 @@ const CLADE_DEFS = {
   "Maniraptora": "Maniraptora is defined as all coelurosaurs more closely related to birds than to Ornithomimus. Examples include Velociraptor and Oviraptor.",
   "Therizinosauria": "Therizinosauria is defined as the maniraptorans more closely related to Therizinosaurus than to birds, herbivores known for their long claws. Examples include Beipiaosaurus and Erlikosaurus.",
   "Alvarezsauria": "Alvarezsauria is defined as all theropods more closely related to Alvarezsaurus than to birds or Ornithomimus. Examples include Mononykus and Shuvuuia.",
-  "Pennaraptora": "Pennaraptora is defined as the most recent common ancestor of Oviraptor, Deinonychus, and Passer (a bird), and all of its descendants \u2014 uniting the oviraptorosaurs and paravians (including birds).",
+  "Pennaraptora": "Pennaraptora is defined as the most recent common ancestor of Oviraptor, Deinonychus, and Passer (a bird), and all of its descendants - uniting the oviraptorosaurs and paravians (including birds).",
   "Oviraptorosauria": "Oviraptorosauria is defined as the maniraptorans more closely related to Oviraptor than to birds, typically toothless and beaked. Examples include Citipati and Caudipteryx.",
   "Caenagnathidae": "Caenagnathidae is defined as the caenagnathoid oviraptorosaurs more closely related to Caenagnathus than to Oviraptor. Examples include Chirostenotes and Anzu.",
   "Oviraptoridae": "Oviraptoridae is defined as the caenagnathoid oviraptorosaurs more closely related to Oviraptor than to Caenagnathus, some bearing elaborate bony head crests. Examples include Citipati and Khaan.",
@@ -157,19 +157,19 @@ const CLADE_DEFS = {
   "Scansoriopterygidae": "Scansoriopterygidae is a family of small, likely tree-climbing paravians, some with membranous, bat-like wings. Examples include Yi and Ambopteryx.",
   "Avialae": "Avialae is usually defined as all paravians more closely related to modern birds than to deinonychosaurs (the dromaeosaurids and troodontids). Examples include Archaeopteryx and Hesperornis.",
   "Hesperornithes": "Hesperornithes is defined as all avialans more closely related to Hesperornis than to modern birds. Examples include Hesperornis and Baptornis.",
-  "Enantiornithes": "Enantiornithes (\u201copposite birds\u201d) is defined as the largest clade of avialans containing Cathayornis and Enantiornis but not modern birds \u2014 a diverse Mesozoic group best known for their distinctive \"backwards\" shoulder joint. Examples include Sinornis and Iberomesornis.",
+  "Enantiornithes": "Enantiornithes (\u201copposite birds\u201d) is defined as the largest clade of avialans containing Cathayornis and Enantiornis but not modern birds - a diverse Mesozoic group best known for their distinctive \"backwards\" shoulder joint. Examples include Sinornis and Iberomesornis.",
   "Megaraptora": "Megaraptora is a group of theropods bearing enlarged hand claws, of debated but likely coelurosaurian affinities. Examples include Megaraptor and Australovenator.",
   "Compsognathidae": "Compsognathidae is a family of small-bodied, often chicken-sized coelurosaurs. Examples include Compsognathus and Sinosauropteryx.",
   "Coelophysoidea": "Coelophysoidea is a group of small, slender, early theropods. Examples include Coelophysis and Dilophosaurus.",
   "Herrerasauria": "Herrerasauria is a group of early, carnivorous saurischian-grade dinosaurs from the Triassic. Examples include Herrerasaurus and Staurikosaurus.",
-  "Thyreophora": "Thyreophora is defined as the genasaurians (ornithischians) more closely related to Ankylosaurus than to Triceratops \u2014 uniting the armored stegosaurs and ankylosaurs. Examples include Stegosaurus and Ankylosaurus.",
+  "Thyreophora": "Thyreophora is defined as the genasaurians (ornithischians) more closely related to Ankylosaurus than to Triceratops - uniting the armored stegosaurs and ankylosaurs. Examples include Stegosaurus and Ankylosaurus.",
   "Stegosauria": "Stegosauria is defined as the thyreophorans more closely related to Stegosaurus than to Ankylosaurus, bearing plates and/or spikes along the back and tail. Examples include Stegosaurus and Kentrosaurus.",
   "Ankylosauria": "Ankylosauria is defined as the thyreophorans more closely related to Ankylosaurus than to Stegosaurus, typically covered in bony armor plates. Examples include Ankylosaurus and Edmontonia.",
   "Ankylosauridae": "Ankylosauridae is defined as the ankylosaurs more closely related to Ankylosaurus than to Panoplosaurus, typically bearing a bony tail club. Examples include Euoplocephalus and Zuul.",
   "Nodosauridae": "Nodosauridae is defined as the ankylosaurs more closely related to Panoplosaurus than to Ankylosaurus, lacking a tail club but often bearing shoulder spikes. Examples include Sauropelta and Edmontonia.",
-  "Genasauria": "Genasauria is defined as the smallest clade containing Ankylosaurus, Iguanodon, Stegosaurus, and Triceratops, their most recent common ancestor, and all of its descendants \u2014 essentially all ornithischians except the earliest-branching forms.",
-  "Neornithischia": "Neornithischia is defined as the largest clade containing Iguanodon and Triceratops, but not Ankylosaurus and Stegosaurus \u2014 uniting the ornithopods and marginocephalians.",
-  "Cerapoda": "Cerapoda is defined as the smallest clade containing Iguanodon, Pachycephalosaurus, and Triceratops, their most recent common ancestor, and all of its descendants \u2014 uniting the ornithopods and marginocephalians.",
+  "Genasauria": "Genasauria is defined as the smallest clade containing Ankylosaurus, Iguanodon, Stegosaurus, and Triceratops, their most recent common ancestor, and all of its descendants - essentially all ornithischians except the earliest-branching forms.",
+  "Neornithischia": "Neornithischia is defined as the largest clade containing Iguanodon and Triceratops, but not Ankylosaurus and Stegosaurus - uniting the ornithopods and marginocephalians.",
+  "Cerapoda": "Cerapoda is defined as the smallest clade containing Iguanodon, Pachycephalosaurus, and Triceratops, their most recent common ancestor, and all of its descendants - uniting the ornithopods and marginocephalians.",
   "Ornithopoda": "Ornithopoda is defined as the largest clade containing Iguanodon but not Pachycephalosaurus and Triceratops, mostly bipedal, beaked herbivores. Examples include Iguanodon and Edmontosaurus.",
   "Iguanodontia": "Iguanodontia is defined as the smallest clade containing Iguanodon, Dryosaurus, Rhabdodon, and Tenontosaurus, their most recent common ancestor, and all of its descendants.",
   "Dryosauridae": "Dryosauridae is a family of small, lightly built early iguanodontians. Examples include Dryosaurus and Valdosaurus.",
@@ -179,16 +179,16 @@ const CLADE_DEFS = {
   "Saurolophinae": "Saurolophinae is defined as the most inclusive clade containing Saurolophus but not Lambeosaurus, generally lacking large hollow head crests. Examples include Edmontosaurus and Maiasaura.",
   "Lambeosaurinae": "Lambeosaurinae is defined as all the hadrosaurs more closely related to Lambeosaurus than to Hadrosaurus and Saurolophus. Examples include Lambeosaurus and Parasaurolophus.",
   "Thescelosauridae": "Thescelosauridae is a family of small-bodied, often burrowing neornithischians. Examples include Thescelosaurus and Oryctodromeus.",
-  "Marginocephalia": "Marginocephalia is defined as the smallest clade containing Ceratops, Pachycephalosaurus, and Triceratops, their most recent common ancestor, and all of its descendants \u2014 uniting the ceratopsians and pachycephalosaurs. Examples include Triceratops and Pachycephalosaurus.",
+  "Marginocephalia": "Marginocephalia is defined as the smallest clade containing Ceratops, Pachycephalosaurus, and Triceratops, their most recent common ancestor, and all of its descendants - uniting the ceratopsians and pachycephalosaurs. Examples include Triceratops and Pachycephalosaurus.",
   "Pachycephalosauria": "Pachycephalosauria is defined as all marginocephalians more closely related to Pachycephalosaurus than to Triceratops, thick-skulled and often dome-headed. Examples include Pachycephalosaurus and Stegoceras.",
   "Ceratopsia": "Ceratopsia is defined as the marginocephalians more closely related to Triceratops than to Pachycephalosaurus, generally beaked and, in later forms, horned and frilled. Examples include Triceratops and Protoceratops.",
   "Leptoceratopsidae": "Leptoceratopsidae is defined as all ceratopsians more closely related to Leptoceratops than to Triceratops, small and mostly hornless. Examples include Leptoceratops and Montanoceratops.",
-  "Ceratopsidae": "Ceratopsidae is defined as the most recent common ancestor of Triceratops and Centrosaurus, and all of its descendants \u2014 the large-bodied, horned and frilled ceratopsians. Examples include Triceratops and Styracosaurus.",
+  "Ceratopsidae": "Ceratopsidae is defined as the most recent common ancestor of Triceratops and Centrosaurus, and all of its descendants - the large-bodied, horned and frilled ceratopsians. Examples include Triceratops and Styracosaurus.",
   "Centrosaurinae": "Centrosaurinae is defined as all the ceratopsids more closely related to Centrosaurus than to Chasmosaurus and Triceratops, typically with a shorter frill and prominent nasal horn. Examples include Centrosaurus and Styracosaurus.",
   "Chasmosaurinae": "Chasmosaurinae is defined as the most recent common ancestor of Chasmosaurus and Triceratops (excluding Centrosaurus), and all of its descendants, typically with a longer frill and prominent brow horns.",
   "Neosauropoda": "Neosauropoda unites the two major sauropod lineages, Diplodocoidea and Macronaria. Examples include Diplodocus and Brachiosaurus.",
   "Diplodocoidea": "Diplodocoidea is defined as the neosauropods more closely related to Diplodocus than to Saltasaurus, typically long and slender with whip-like tails. Examples include Diplodocus and Apatosaurus.",
-  "Flagellicaudata": "Flagellicaudata is defined as the most recent common ancestor of Dicraeosaurus and Diplodocus, and all of its descendants \u2014 the diplodocoids with especially whip-like tails.",
+  "Flagellicaudata": "Flagellicaudata is defined as the most recent common ancestor of Dicraeosaurus and Diplodocus, and all of its descendants - the diplodocoids with especially whip-like tails.",
   "Diplodocidae": "Diplodocidae is defined as all diplodocoids more closely related to Diplodocus than to Dicraeosaurus. Examples include Diplodocus and Apatosaurus.",
   "Dicraeosauridae": "Dicraeosauridae is defined as all diplodocoids more closely related to Dicraeosaurus than to Diplodocus, relatively short-necked, some with tall neural spines. Examples include Dicraeosaurus and Amargasaurus.",
   "Rebbachisauridae": "Rebbachisauridae is defined as all diplodocoids more closely related to Rebbachisaurus than to Diplodocus and Dicraeosaurus. Examples include Rebbachisaurus and Nigersaurus.",
@@ -261,16 +261,19 @@ function showCladeInfo(name) {
   document.getElementById('clade-overlay').classList.add('show');
 }
 
-// Genera with a live totaldino.com/dino/<slug> page. Any of these names
-// appearing in a clade definition gets turned into a link. Sourced from
-// totaldino.com's own dino index (plus one page — Rebbachisaurus — found
-// separately, since that index appears to lag slightly behind new posts).
-const LINKED_GENERA = ["Aardonyx","Abrosaurus","Achillobator","Acrocanthosaurus","Alamosaurus","Albertosaurus","Aletopelta","Alxasaurus","Ampelognathus","Anchiornis","Apatosaurus","Appalachiosaurus","Archaeopteryx","Ardetosaurus","Arrhinoceratops","Astrodon","Atlasaurus","Auroraceratops","Austroraptor","Barapasaurus","Baryonyx","Brachiosaurus","Brachytrachelopan","Brontosaurus","Buitreraptor","Bustingorrytitan","Calvarius","Camarasaurus","Camptosaurus","Carcharodontosaurus","Chakisaurus","Chucarosaurus","Citipati","Coelophysis","Concavenator","Cryolophosaurus","Dacentrurus","Datai","Deinocheirus","Deinonychus","Diabloceratops","Dilophosaurus","Diplodocus","Diuqin","Dornraptor","Dromaeosaurus","Dryptosaurus","Edmontosaurus","Eoabelisaurus","Eoneophron","Equijubus","Europasaurus","Fujianvenator","Furcatoceratops","Gandititan","Garumbatitan","Gastonia","Gideonmantellia","Gigantoraptor","Gonkoken","Gremlin","Gryposaurus","Herrerasaurus","Hesperornis","Huayangosaurus","Hylaeosaurus","Hypsilophodon","Iani","Igai","Iguanodon","Imperobator","Inawentu","Isisaurus","Jakapil","Jiangxititan","Jingiella","Kentrosaurus","Koshisaurus","Kuru","Lambeosaurus","Lanzhousaurus","Lingwulong","Lishulong","Lusotitan","Lythronax","Maiasaura","Majungasaurus","Malefica","Mamenchisaurus","Mantellisaurus","Maraapunisaurus","Massospondylus","Megalosaurus","Megapnosaurus","Menefeeceratops","Meraxes","Mexidracon","Migmanychion","Minimocursor","Minqaria","Musankwa","Muttaburrasaurus","Nanotyrannus","Nanuqsaurus","Nasutoceratops","Oblitosaurus","Olorotitan","Ornithomimus","Oryctodromeus","Oviraptor","Ozraptor","Pachycephalosaurus","Pachyrhinosaurus","Patagotitan","Pectinodon","Planicoxa","Plateosaurus","Platytholus","Polacanthus","Protathlitis","Protoceratops","Qianlong","Qunkasaura","Rajasaurus","Rapetosaurus","Rebbachisaurus","Riojavenatrix","Saltasaurus","Sarcosaurus","Saurolophus","Sauroposeidon","Scelidosaurus","Shuvuuia","Sidersaura","Sinotyrannus","Spicomellus","Spinops","Spinosaurus","Stegoceras","Stegosaurus","Stegouros","Stellasaurus","Stenonychosaurus","Supersaurus","Talenkauen","Tarbosaurus","Tarchia","Tawa","Tethyshadros","Tharosaurus","Thyreosaurus","Tiamat","Titanomachya","Tlatolophus","Torvosaurus","Triceratops","Tyrannomimus","Tyrannosaurus","Udelartitan","Uriash","Utahceratops","Vectidromeus","Vectipelta","Velociraptor","Yanbeilong","Yangchuanosaurus","Yingshanosaurus","Yutyrannus","Yuxisaurus","Zalmoxes","Zuul"];
-const LINKED_GENERA_SET = new Set(LINKED_GENERA);
+// Every genus name mentioned in a clade definition is a real genus from
+// TAXA, so we link ALL of them to totaldino.com/dino/<slug> unconditionally
+// — no curated list to maintain. There's no reliable way for this game
+// (hosted on GitHub Pages) to check at runtime whether a given
+// totaldino.com page actually exists yet: that would require a
+// cross-origin fetch, and Wix doesn't send the CORS headers needed for a
+// browser to read the response. So a link here may occasionally 404 if
+// the page hasn't been written yet — it'll start working the moment it is.
+const ALL_GENUS_NAMES = TAXA.map(t => t.name);
 // Sort longest-first so e.g. "Nanotyrannus" is matched before a shorter
 // name that might otherwise clip part of it.
-const LINKED_GENERA_SORTED = [...LINKED_GENERA].sort((a, b) => b.length - a.length);
-const GENUS_LINK_RE = new RegExp('\\b(' + LINKED_GENERA_SORTED.join('|') + ')\\b', 'g');
+const GENUS_LINK_SORTED = [...ALL_GENUS_NAMES].sort((a, b) => b.length - a.length);
+const GENUS_LINK_RE = new RegExp('\\b(' + GENUS_LINK_SORTED.map(n => n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')\\b', 'g');
 
 function linkifyGenera(text) {
   const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -461,6 +464,7 @@ function giveUp() {
   if (S.won || S.over) return;
   S.over = true; S.revealed = S.target.lineage.length - 1;
   renderTree(); updateStatus(); setMsg('The answer was: ' + S.target.name);
+  setTimeout(showVictory, 500);
 }
 
 function setMsg(t) { document.getElementById('message').textContent = t; }
@@ -885,13 +889,13 @@ function renderTree() {
   svg.setAttribute('height', VH);
   svg.innerHTML = '<defs><style>'
     + '.edge{fill:none;stroke:#003800;stroke-width:3}'
-    + '.sn{fill:#080808;stroke:#006600;stroke-width:1}'
-    + '.pn{fill:#001a00;stroke:#00cc00;stroke-width:1.5}'
-    + '.bn{fill:#050505;stroke:#005500;stroke-width:1;stroke-dasharray:4 2}'
-    + '.tn{fill:#001400;stroke:#00ff00;stroke-width:1.5;stroke-dasharray:5 2}'
+    + '.sn{fill:#080808;stroke:#006600;stroke-width:2}'
+    + '.pn{fill:#001a00;stroke:#00cc00;stroke-width:2.5}'
+    + '.bn{fill:#050505;stroke:#00ff00;stroke-width:1}'
+    + '.tn{fill:#001400;stroke:#00ff00;stroke-width:1}'
     + '.wn{fill:#00ff00;stroke:#00ff00;stroke-width:2}'
     + '.ln{fill:#1a0000;stroke:#aa2200;stroke-width:1.5}'
-    + '.st{fill:#009900;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}'
+    + '.st{fill:#009900;font-family:Calibri,"Segoe UI",Arial,sans-serif}'
     + '.bt{fill:#006600;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}'
     + '.wt{fill:#000;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold;font-style:italic}'
     + '.lt{fill:#aa2200;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}'
@@ -1061,9 +1065,12 @@ const TOTALDINO_PAGES = new Set(["Achillobator","Albertosaurus","Anchiornis","Ar
 function showVictory() {
   const n = S.guesses.length;
   document.getElementById('v-title').textContent = S.target.name;
-  document.getElementById('v-sub').textContent =
-    'Identified in ' + n + ' guess' + (n!==1?'es':'') +
-    (S.hints > 0 ? ' + ' + S.hints + ' hint' + (S.hints>1?'s':'') : '') + '.';
+  const subEl = document.getElementById('v-sub');
+  subEl.textContent = S.won
+    ? ('Identified in ' + n + ' guess' + (n!==1?'es':'') +
+       (S.hints > 0 ? ' + ' + S.hints + ' hint' + (S.hints>1?'s':'') : '') + '.')
+    : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
+  subEl.style.color = S.won ? '' : '#ff3333';
 
   // Paleoart — always pulls the current version directly from Commons, so
   // updating the art there updates the game automatically. Stays hidden
