@@ -384,23 +384,17 @@ function init() {
   if (window.matchMedia('(pointer: coarse)').matches) inputEl.placeholder = 'Enter a dinosaur...'; // shorter on mobile so it doesn't get clipped by the narrower search bar
   function submitNow() {
     const mobile = window.matchMedia('(pointer: coarse)').matches;
-    // On mobile, we want the keyboard to visibly drop while the tree
-    // animates, then pop back up on its own afterward. A real blur() now
-    // and focus() later won't do that — once focus() happens outside the
-    // original tap (e.g. after a setTimeout), iOS Safari refuses to reopen
-    // the keyboard for it. So instead we keep true DOM focus on the input
-    // the whole time, and just toggle `readonly`: iOS hides the keyboard
-    // for a focused-but-readonly field, and brings it back the moment
-    // readonly is removed — no fresh gesture needed since focus never left.
-    if (mobile) inputEl.setAttribute('readonly', 'readonly');
+    // We tried keeping focus and toggling `readonly` to auto-hide/reopen the
+    // keyboard around the tree animation, but that isn't reliable across
+    // mobile browsers (some don't dismiss the keyboard for a readonly-but-
+    // focused input the way iOS does). Auto-reopening the keyboard without
+    // a fresh tap isn't reliably achievable at all — browsers require a
+    // direct user gesture for that. So on mobile we just blur for real and
+    // leave it closed; the next guess needs a tap on the search bar, same
+    // as before this feature was attempted.
+    if (mobile) inputEl.blur();
     submitGuess();
-    if (!mobile) {
-      inputEl.focus();
-    } else if (S.won || S.over) {
-      inputEl.blur(); // game's over — let the keyboard close for real, out of the way of the victory screen
-    } else {
-      setTimeout(() => { inputEl.removeAttribute('readonly'); inputEl.focus(); }, 500); // once the tree animation settles
-    }
+    if (!mobile) inputEl.focus(); // desktop: stay ready for the next guess immediately
   }
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' && suggItems.length > 0) {
@@ -814,12 +808,16 @@ function renderTree() {
     leafCounts.set(n, s);
     return s;
   })(visRoot);
-  const totalLeaves = leafCounts.get(visRoot) || 1;
   const MIN_EW = 1.6 * bScale, MAX_EW = 7 * bScale;
-  // sqrt compresses the range so a branch doesn't need many guesses under it
-  // to already look reasonably substantial — thickens as more of the tree
-  // grows beneath it, tapering toward single-leaf tips.
-  function edgeWidth(n) { return MIN_EW + (MAX_EW - MIN_EW) * Math.sqrt(leafCounts.get(n) / totalLeaves); }
+  // Widths scale against a fixed reference count, not the currently-visible
+  // total — comparing to the live total would make the trunk edge (which by
+  // definition carries ~100% of whatever's revealed so far) render at max
+  // thickness from the very first guess. Comparing against a fixed number
+  // instead means every edge, including the one off Dinosauria, starts thin
+  // and thickens genuinely over the course of the game as more genera get
+  // revealed beneath it.
+  const EW_REFERENCE = 12;
+  function edgeWidth(n) { return MIN_EW + (MAX_EW - MIN_EW) * Math.sqrt(Math.min(1, leafCounts.get(n) / EW_REFERENCE)); }
 
   function draw(n, incomingChainIdx) {
     const x = px(n), y = py(n);
@@ -907,7 +905,7 @@ function renderTree() {
     + '.edge.epath{stroke:#009900}'
     + '.sn{fill:#080808;stroke:#006600;stroke-width:2}'
     + '.pn{fill:#001a00;stroke:#00cc00;stroke-width:2.5}'
-    + '.bn{fill:#050505;stroke:#00ff00;stroke-width:1}'
+    + '.bn{fill:#050505;stroke:#006600;stroke-width:1}'
     + '.tn{fill:#001400;stroke:#00ff00;stroke-width:1}'
     + '.wn{fill:#00ff00;stroke:#00ff00;stroke-width:2}'
     + '.ln{fill:#1a0000;stroke:#aa2200;stroke-width:1.5}'
