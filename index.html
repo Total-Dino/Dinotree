@@ -178,7 +178,7 @@ const CLADE_DEFS = {
   "Saurolophinae": "Saurolophinae is defined as the most inclusive clade containing Saurolophus but not Lambeosaurus, generally lacking large hollow head crests. Examples include Edmontosaurus and Maiasaura.",
   "Lambeosaurinae": "Lambeosaurinae is defined as all the hadrosaurs more closely related to Lambeosaurus than to Hadrosaurus and Saurolophus. Examples include Lambeosaurus and Parasaurolophus.",
   "Thescelosauridae": "Thescelosauridae is a family of small-bodied, often burrowing neornithischians. Examples include Thescelosaurus and Oryctodromeus.",
-  "Marginocephalia": "Marginocephalia is defined as the smallest clade containing Ceratops, Pachycephalosaurus, and Triceratops, their most recent common ancestor, and all of its descendants - uniting the ceratopsians and pachycephalosaurs. Examples include Triceratops and Pachycephalosaurus.",
+  "Marginocephalia": "Marginocephalia is defined as the smallest clade containing Pachycephalosaurus and Triceratops, their most recent common ancestor, and all of its descendants - uniting the ceratopsians and pachycephalosaurs. Examples include Triceratops and Pachycephalosaurus.",
   "Pachycephalosauria": "Pachycephalosauria is defined as all marginocephalians more closely related to Pachycephalosaurus than to Triceratops, thick-skulled and often dome-headed. Examples include Pachycephalosaurus and Stegoceras.",
   "Ceratopsia": "Ceratopsia is defined as the marginocephalians more closely related to Triceratops than to Pachycephalosaurus, generally beaked and, in later forms, horned and frilled. Examples include Triceratops and Protoceratops.",
   "Leptoceratopsidae": "Leptoceratopsidae is defined as all ceratopsians more closely related to Leptoceratops than to Triceratops, small and mostly hornless. Examples include Leptoceratops and Montanoceratops.",
@@ -274,11 +274,18 @@ const ALL_GENUS_NAMES = TAXA.map(t => t.name);
 const GENUS_LINK_SORTED = [...ALL_GENUS_NAMES].sort((a, b) => b.length - a.length);
 const GENUS_LINK_RE = new RegExp('\\b(' + GENUS_LINK_SORTED.map(n => n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')\\b', 'g');
 
+// Most totaldino.com genus pages use the plain lowercase genus name as the
+// URL slug, but a few use a longer species-qualified slug instead (e.g. to
+// disambiguate or match how the page was originally published). Add an
+// entry here whenever a genus's actual URL doesn't match its lowercase name.
+const DINO_SLUG_OVERRIDES = { "Zuul": "zuulcrurivastator" };
+
 function linkifyGenera(text) {
   const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const escaped = escHtml(text);
   return escaped.replace(GENUS_LINK_RE, function(match) {
-    return '<a href="https://www.totaldino.com/dino/' + match.toLowerCase() + '" target="_blank" rel="noopener" class="dino-link">' + match + '</a>';
+    const slug = DINO_SLUG_OVERRIDES[match] || match.toLowerCase();
+    return '<a href="https://www.totaldino.com/dino/' + slug + '" target="_blank" rel="noopener" class="dino-link">' + match + '</a>';
   });
 }
 
