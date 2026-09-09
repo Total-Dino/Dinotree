@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dinotree</title>
+<!-- These only apply if this raw file's own URL is ever shared directly -
+     when shared as totaldino.com/dinotree (a Wix page embedding this via
+     "Embed a Site"), Facebook/X read that Wix page's own head instead, so
+     the social share image lives in Wix's page SEO settings, not here. -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://totaldino.com/dinotree">
+<meta property="og:title" content="Dinotree - Daily Dinosaur Guessing Game">
+<meta property="og:description" content="Guess today's dinosaur using clues from the tree of life.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dinotree - Daily Dinosaur Guessing Game">
+<meta name="twitter:description" content="Guess today's dinosaur using clues from the tree of life.">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe UI",Arial,sans-serif;overflow:hidden;overscroll-behavior:none}
@@ -410,7 +421,14 @@ function dateHash(s) {
   return Math.abs(h);
 }
 
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+// Central Time (America/Chicago) rather than UTC, so the daily dino and
+// the leaderboard both reset at midnight CT regardless of where a player
+// is - the "America/Chicago" zone handles the CST/CDT switch on its own.
+function todayStr() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const get = type => parts.find(p => p.type === type).value;
+  return get('year') + '-' + get('month') + '-' + get('day');
+}
 
 // ── LEADERBOARD CONFIG ───────────────────────────────────────────
 // Fill these in with your own Firebase project's keys (Firebase console →
@@ -1296,17 +1314,23 @@ function showVictory() {
   }
 }
 
-// Spoiler-free by design: shares "I got the dino in N guesses!" without
+// Spoiler-free by design: shares "I got the dino in N guesses" without
 // naming the genus, so a friend who hasn't played today isn't given the
-// answer. Opens the network's own share dialog in a popup rather than
-// navigating away from the game.
+// answer. Always points at the canonical game URL (not window.location,
+// which can be a raw hosting/staging URL) so shares land on the real page
+// regardless of where this file happens to be running from.
+// Note on Facebook: its share dialog no longer accepts pre-filled post
+// text from a URL (a platform-wide anti-spam restriction, not something
+// fixable client-side) - what people see instead is whatever Open Graph
+// tags are on GAME_URL, so the title/description/image meta tags in
+// <head> are what actually needs to look good, not the "quote" param.
+const GAME_URL = 'https://totaldino.com/dinotree';
 function shareVictory(network) {
   const text = "I got the dino in " + guessHintPhrase() + "! \ud83e\udd96";
-  const url = window.location.href;
   const shareUrl = network === 'x'
-    ? 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url)
-    : 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '&quote=' + encodeURIComponent(text);
-  window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
+    ? 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(GAME_URL) + '&hashtags=Dinosaurs,Paleontology'
+    : 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL) + '&quote=' + encodeURIComponent(text);
+  window.open(shareUrl, '_blank', 'noopener,noreferrer');
 }
 
 init();
