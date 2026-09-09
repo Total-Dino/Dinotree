@@ -54,25 +54,36 @@ svg{display:block;margin:0 auto}
 }
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);justify-content:center;align-items:center;z-index:50}
 #overlay.show{display:flex}
-#vbox{border:1px solid #00ff00;background:#000;padding:28px 32px;max-width:380px;width:90%;text-align:center}
-#vbox h2{font-size:20px;margin-bottom:6px;letter-spacing:2px}
+/* Shared shell for every pop-up box (victory, clade info, leaderboard):
+   border/background/relative-positioning plus its top-right close X live
+   here so all three stay visually consistent as more get added. Each
+   box's own #id rule below only sets what's specific to it (padding,
+   max-width, text alignment). */
+.popup-box{position:relative;border:1px solid #00ff00;background:#000;box-sizing:border-box}
+.popup-close{position:absolute;top:8px;right:10px;font-size:20px;line-height:1;color:#00aa00;cursor:pointer;padding:4px}
+.popup-close:hover{color:#00ff00}
+#vbox{padding:28px 32px;max-width:380px;width:90%;text-align:center}
+#vbox h2{font-size:28px;margin-top:-12px;margin-bottom:10px;letter-spacing:1px;padding:0 26px}
 #v-art-wrap{display:none;padding:26px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
 #v-art{max-width:100%;max-height:220px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
 #vbox a.vlink:hover{background:#001a00}
-.vcls{display:inline-block;margin-top:10px;font-size:11px;color:#004400;cursor:pointer;letter-spacing:1px}
-.vcls:hover{color:#00aa00}
+#v-share-row{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#v-share-pair{display:flex;gap:8px}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #00ff00;color:#00ff00;padding:4px 14px;font-size:12px;letter-spacing:1px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap}
+.share-btn:hover{background:#001a00}
+.share-btn svg{flex-shrink:0}
 #clade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);justify-content:center;align-items:center;z-index:60;padding:20px}
 #clade-overlay.show{display:flex}
-#clade-box{border:1px solid #00ff00;background:#000;padding:22px 24px;max-width:420px;width:100%;text-align:left}
+#clade-box{padding:22px 24px;max-width:420px;width:100%;text-align:left}
 #clade-box h2{font-size:16px;letter-spacing:1px;margin-bottom:12px;color:#00ff00;font-style:italic}
 #clade-box #clade-text{font-size:13px;color:#00cc00;line-height:1.6;margin-bottom:6px}
 #clade-box #clade-text a.dino-link{color:#00ff00;text-decoration:underline}
 #clade-box #clade-text a.dino-link:hover{color:#66ff66}
 #board-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);justify-content:center;align-items:center;z-index:55;padding:20px}
 #board-overlay.show{display:flex}
-#board-box{border:1px solid #00ff00;background:#000;padding:24px 26px;max-width:380px;width:100%;text-align:left}
+#board-box{padding:24px 26px;max-width:380px;width:100%;text-align:left}
 #board-box h2{font-size:16px;letter-spacing:2px;margin:0 0 14px;color:#00ff00;text-align:center}
 #board-entry{display:none;gap:6px;margin-bottom:16px}
 #board-initials{flex:1;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:inherit;font-size:16px;text-transform:uppercase;outline:none}
@@ -107,32 +118,38 @@ svg{display:block;margin:0 auto}
   </div>
 </div>
 <div id="overlay">
-  <div id="vbox">
+  <div id="vbox" class="popup-box">
+    <span class="popup-close" onclick="document.getElementById('overlay').classList.remove('show')">&times;</span>
     <h2 id="v-title"></h2>
     <div id="v-art-wrap"><img id="v-art" alt="" /></div>
     <div class="vsub" id="v-sub"></div>
     <a class="vlink" id="v-link" href="#" target="_blank">LEARN MORE &rarr;</a><br>
-    <span class="vcls" id="v-board-link" onclick="showBoard(true)" style="display:none">&mdash; add to today's leaderboard &mdash;</span>
-    <span class="vcls" onclick="document.getElementById('overlay').classList.remove('show')">&mdash; close &mdash;</span>
+    <div id="v-share-row" style="display:none">
+      <div id="v-share-pair">
+        <a class="share-btn" href="#" onclick="shareVictory('x'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>share on x</a>
+        <a class="share-btn" href="#" onclick="shareVictory('facebook'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.878h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>facebook</a>
+      </div>
+      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to today's leaderboard</a>
+    </div>
   </div>
 </div>
 <div id="clade-overlay">
-  <div id="clade-box">
+  <div id="clade-box" class="popup-box">
+    <span class="popup-close" onclick="hideCladeInfo()">&times;</span>
     <h2 id="clade-title"></h2>
     <div id="clade-text"></div>
-    <span class="vcls" onclick="hideCladeInfo()">&mdash; close &mdash;</span>
   </div>
 </div>
 <div id="board-overlay">
-  <div id="board-box">
+  <div id="board-box" class="popup-box">
+    <span class="popup-close" onclick="hideBoard()">&times;</span>
     <h2>TODAY'S TOP GUESSERS</h2>
     <div id="board-entry">
       <input id="board-initials" maxlength="3" placeholder="AAA" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       <button onclick="submitScore()">ADD SCORE</button>
     </div>
-    <div id="board-already" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">You've already added a score today — come back tomorrow!</div>
+    <div id="board-already" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">You've already added a score today. Come back tomorrow!</div>
     <div id="board-list"></div>
-    <span class="vcls" onclick="hideBoard()">&mdash; close &mdash;</span>
   </div>
 </div>
 
@@ -307,12 +324,19 @@ const GENUS_LINK_RE = new RegExp('\\b(' + GENUS_LINK_SORTED.map(n => n.replace(/
 // entry here whenever a genus's actual URL doesn't match its lowercase name.
 const DINO_SLUG_OVERRIDES = { "Zuul": "zuulcrurivastator" };
 
+// Single source of truth for building a totaldino.com/dino/ URL from a
+// genus name — every caller goes through here so a slug override (like
+// Zuul's above) only ever needs to be added in one place.
+function dinoUrl(name) {
+  const slug = DINO_SLUG_OVERRIDES[name] || name.toLowerCase().replace(/ /g, '-');
+  return 'https://www.totaldino.com/dino/' + slug;
+}
+
 function linkifyGenera(text) {
   const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const escaped = escHtml(text);
   return escaped.replace(GENUS_LINK_RE, function(match) {
-    const slug = DINO_SLUG_OVERRIDES[match] || match.toLowerCase();
-    return '<a href="https://www.totaldino.com/dino/' + slug + '" target="_blank" rel="noopener" class="dino-link">' + match + '</a>';
+    return '<a href="' + dinoUrl(match) + '" target="_blank" rel="noopener" class="dino-link">' + match + '</a>';
   });
 }
 
@@ -473,7 +497,7 @@ async function loadLeaderboard() {
     const rows = [];
     snap.forEach(doc => rows.push(doc.data()));
     rows.sort((a, b) => (a.guesses - b.guesses) || (a.hints - b.hints));
-    if (rows.length === 0) { listEl.textContent = 'Nobody yet today — be the first!'; return; }
+    if (rows.length === 0) { listEl.textContent = 'Nobody yet today - Be the first!'; return; }
     listEl.innerHTML = rows.slice(0, 10).map((r, i) =>
       '<div class="board-row"><span class="board-rank">' + (i+1) + '.</span> ' +
       '<span class="board-initials">' + r.initials + '</span> got it in ' +
@@ -1211,13 +1235,20 @@ function renderTree() {
 // to a Wikipedia link on the victory screen instead of a dead link.
 const TOTALDINO_PAGES = new Set(["Achillobator","Albertosaurus","Anchiornis","Archaeopteryx","Baryonyx","Carcharodontosaurus","Coelophysis","Cryolophosaurus","Deinonychus","Diuqin","Dromaeosaurus","Eoabelisaurus","Fujianvenator","Herrerasaurus","Imperobator","Lythronax","Megalosaurus","Meraxes","Migmanychion","Nanuqsaurus","Oviraptor","Pectinodon","Rajasaurus","Sarcosaurus","Siats","Spinosaurus","Tarbosaurus","Torvosaurus","Tyrannosaurus","Yangchuanosaurus","Acrocanthosaurus","Alxasaurus","Appalachiosaurus","Austroraptor","Buitreraptor","Citipati","Concavenator","Deinocheirus","Dilophosaurus","Dornraptor","Dryptosaurus","Eoneophron","Gigantoraptor","Hesperornis","Kuru","Majungasaurus","Megapnosaurus","Mexidracon","Nanotyrannus","Ornithomimus","Ozraptor","Protathlitis","Riojavenatrix","Shuvuuia","Sinotyrannus","Stenonychosaurus","Tawa","Tyrannomimus","Velociraptor","Yutyrannus","Aardonyx","Abrosaurus","Alamosaurus","Apatosaurus","Ardetosaurus","Astrodon","Atlasaurus","Barapasaurus","Brachiosaurus","Brachytrachelopan","Brontosaurus","Bustingorrytitan","Camarasaurus","Chucarosaurus","Diplodocus","Europasaurus","Gandititan","Garumbatitan","Igai","Inawentu","Isisaurus","Jiangxititan","Jingiella","Lingwulong","Lishulong","Lusotitan","Mamenchisaurus","Maraapunisaurus","Massospondylus","Musankwa","Patagotitan","Plateosaurus","Qianlong","Qunkasaura","Rapetosaurus","Saltasaurus","Sauroposeidon","Sidersaura","Supersaurus","Tharosaurus","Tiamat","Titanomachya","Udelartitan","Uriash","Aletopelta","Arrhinoceratops","Calvarius","Chakisaurus","Datai","Edmontosaurus","Furcatoceratops","Gideonmantellia","Gremlin","Huayangosaurus","Hypsilophodon","Iguanodon","Kentrosaurus","Lambeosaurus","Maiasaura","Mantellisaurus","Minimocursor","Muttaburrasaurus","Oblitosaurus","Oryctodromeus","Pachyrhinosaurus","Platytholus","Protoceratops","Scelidosaurus","Spinops","Stegosaurus","Stellasaurus","Tarchia","Thyreosaurus","Triceratops","Vectidromeus","Yanbeilong","Yuxisaurus","Zuul","Ampelognathus","Auroraceratops","Camptosaurus","Dacentrurus","Diabloceratops","Equijubus","Gastonia","Gonkoken","Gryposaurus","Hylaeosaurus","Iani","Jakapil","Koshisaurus","Lanzhousaurus","Malefica","Menefeeceratops","Minqaria","Nasutoceratops","Olorotitan","Pachycephalosaurus","Planicoxa","Polacanthus","Saurolophus","Spicomellus","Stegoceras","Stegouros","Talenkauen","Tethyshadros","Tlatolophus","Utahceratops","Vectipelta","Yingshanosaurus","Zalmoxes"]);
 
+// "6 guesses + 1 hint" — shared by the victory subtitle and the social
+// share text so the pluralization logic only lives in one place.
+function guessHintPhrase() {
+  const n = S.guesses.length;
+  return n + ' guess' + (n!==1?'es':'') +
+    (S.hints > 0 ? ' + ' + S.hints + ' hint' + (S.hints>1?'s':'') : '');
+}
+
 function showVictory() {
   const n = S.guesses.length;
   document.getElementById('v-title').textContent = S.target.name;
   const subEl = document.getElementById('v-sub');
   subEl.textContent = S.won
-    ? ('Identified in ' + n + ' guess' + (n!==1?'es':'') +
-       (S.hints > 0 ? ' + ' + S.hints + ' hint' + (S.hints>1?'s':'') : '') + '.')
+    ? ('Identified in ' + guessHintPhrase() + '.')
     : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
   subEl.style.color = S.won ? '' : '#ff3333';
 
@@ -1233,15 +1264,43 @@ function showVictory() {
 
   const linkEl = document.getElementById('v-link');
   if (TOTALDINO_PAGES.has(S.target.name)) {
-    const slug = S.target.name.toLowerCase().replace(/ /g,'-');
-    linkEl.href = 'https://totaldino.com/dino/' + slug;
+    linkEl.href = dinoUrl(S.target.name);
     linkEl.textContent = 'LEARN MORE ABOUT ' + S.target.name.toUpperCase() + ' \u2192';
   } else {
     linkEl.href = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(S.target.name);
     linkEl.textContent = 'VIEW ON WIKIPEDIA \u2192';
   }
-  document.getElementById('v-board-link').style.display = S.won ? 'inline-block' : 'none';
+  document.getElementById('v-share-row').style.display = S.won ? 'flex' : 'none';
   document.getElementById('overlay').classList.add('show');
+  // Size the x/facebook pair from the leaderboard button alone — each gets
+  // half its width (minus the gap between them) so the pair's combined
+  // width matches it exactly. Independent of the "learn more" link. Never
+  // shrinks a button below its own text's natural width, so "share on x"
+  // and "facebook" always stay on one line even if that widens the pair
+  // slightly past the leaderboard button.
+  if (S.won) {
+    const pair = document.getElementById('v-share-pair');
+    const shareBtns = pair.querySelectorAll('.share-btn');
+    shareBtns.forEach(btn => { btn.style.width = ''; });
+    const gap = parseFloat(getComputedStyle(pair).columnGap) || 0;
+    const boardBtn = document.getElementById('v-board-link');
+    boardBtn.style.width = '';
+    const halfWidth = (boardBtn.offsetWidth - gap) / 2;
+    shareBtns.forEach(btn => { btn.style.width = Math.max(halfWidth, btn.offsetWidth) + 'px'; });
+  }
+}
+
+// Spoiler-free by design: shares "I got the dino in N guesses!" without
+// naming the genus, so a friend who hasn't played today isn't given the
+// answer. Opens the network's own share dialog in a popup rather than
+// navigating away from the game.
+function shareVictory(network) {
+  const text = "I got the dino in " + guessHintPhrase() + "! \ud83e\udd96";
+  const url = window.location.href;
+  const shareUrl = network === 'x'
+    ? 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url)
+    : 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '&quote=' + encodeURIComponent(text);
+  window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
 }
 
 init();
