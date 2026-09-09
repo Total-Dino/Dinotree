@@ -86,7 +86,7 @@ svg{display:block;margin:0 auto}
 #board-box{padding:24px 26px;max-width:380px;width:100%;text-align:left}
 #board-box h2{font-size:16px;letter-spacing:2px;margin:0 0 14px;color:#00ff00;text-align:center}
 #board-entry{display:none;gap:6px;margin-bottom:16px}
-#board-initials{flex:1;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:inherit;font-size:16px;text-transform:uppercase;outline:none}
+#board-initials{flex:1;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:inherit;font-size:16px;outline:none}
 #board-initials:focus{border-color:#00ff00}
 #board-entry button{white-space:nowrap}
 #board-list{font-size:13px;color:#00cc00;line-height:1.9;min-height:20px}
@@ -145,7 +145,7 @@ svg{display:block;margin:0 auto}
     <span class="popup-close" onclick="hideBoard()">&times;</span>
     <h2>TODAY'S TOP GUESSERS</h2>
     <div id="board-entry">
-      <input id="board-initials" maxlength="3" placeholder="AAA" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <input id="board-initials" maxlength="10" placeholder="Name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       <button onclick="submitScore()">ADD SCORE</button>
     </div>
     <div id="board-already" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">You've already added a score today. Come back tomorrow!</div>
@@ -438,10 +438,16 @@ try {
 // board simply stops being shown once the date rolls over - nothing
 // needs to be deleted or reset by hand. Only real wins are eligible
 // (never a give-up).
-// A short, deliberately non-exhaustive blocklist for 3-letter initials -
-// just enough to keep the obvious cases off a board anyone can see.
+// A short, deliberately non-exhaustive blocklist - just enough to keep
+// the obvious cases off a board anyone can see. Matched as a substring
+// anywhere in the name (case-insensitive), not just an exact match, since
+// names can now be up to 10 characters rather than exactly 3.
 const INITIALS_BLOCKLIST = new Set(['ASS','FAG','FUK','FUC','CUM','SEX','GAY','NIG','KKK','RAP','TIT','DIK','COK','SHT','PIS','CNT']);
-function isBlockedInitials(s) { return INITIALS_BLOCKLIST.has(s.toUpperCase()); }
+function isBlockedInitials(s) {
+  const upper = s.toUpperCase();
+  for (const bad of INITIALS_BLOCKLIST) { if (upper.includes(bad)) return true; }
+  return false;
+}
 
 function alreadySubmittedToday() {
   try { return localStorage.getItem('dinotree_submitted') === todayStr(); }
@@ -465,7 +471,7 @@ function hideBoard() {
 
 async function submitScore() {
   const el = document.getElementById('board-initials');
-  const initials = el.value.trim().toUpperCase().slice(0, 3);
+  const initials = el.value.trim().slice(0, 10);
   if (!initials) return;
   if (isBlockedInitials(initials)) { el.value = ''; el.placeholder = 'try again'; return; }
   if (typeof db === 'undefined' || !db) { alert("Leaderboard isn't set up yet."); return; }
@@ -500,9 +506,8 @@ async function loadLeaderboard() {
     if (rows.length === 0) { listEl.textContent = 'Nobody yet today - Be the first!'; return; }
     listEl.innerHTML = rows.slice(0, 10).map((r, i) =>
       '<div class="board-row"><span class="board-rank">' + (i+1) + '.</span> ' +
-      '<span class="board-initials">' + r.initials + '</span> got it in ' +
-      r.guesses + ' guess' + (r.guesses !== 1 ? 'es' : '') +
-      (r.hints > 0 ? ' + ' + r.hints + ' hint' + (r.hints > 1 ? 's' : '') : '') + '!</div>'
+      '<span class="board-initials">' + r.initials + '</span> - ' +
+      formatGuessHintPhrase(r.guesses, r.hints) + '</div>'
     ).join('');
   } catch (err) {
     listEl.textContent = 'Could not load the leaderboard.';
@@ -1235,13 +1240,14 @@ function renderTree() {
 // to a Wikipedia link on the victory screen instead of a dead link.
 const TOTALDINO_PAGES = new Set(["Achillobator","Albertosaurus","Anchiornis","Archaeopteryx","Baryonyx","Carcharodontosaurus","Coelophysis","Cryolophosaurus","Deinonychus","Diuqin","Dromaeosaurus","Eoabelisaurus","Fujianvenator","Herrerasaurus","Imperobator","Lythronax","Megalosaurus","Meraxes","Migmanychion","Nanuqsaurus","Oviraptor","Pectinodon","Rajasaurus","Sarcosaurus","Siats","Spinosaurus","Tarbosaurus","Torvosaurus","Tyrannosaurus","Yangchuanosaurus","Acrocanthosaurus","Alxasaurus","Appalachiosaurus","Austroraptor","Buitreraptor","Citipati","Concavenator","Deinocheirus","Dilophosaurus","Dornraptor","Dryptosaurus","Eoneophron","Gigantoraptor","Hesperornis","Kuru","Majungasaurus","Megapnosaurus","Mexidracon","Nanotyrannus","Ornithomimus","Ozraptor","Protathlitis","Riojavenatrix","Shuvuuia","Sinotyrannus","Stenonychosaurus","Tawa","Tyrannomimus","Velociraptor","Yutyrannus","Aardonyx","Abrosaurus","Alamosaurus","Apatosaurus","Ardetosaurus","Astrodon","Atlasaurus","Barapasaurus","Brachiosaurus","Brachytrachelopan","Brontosaurus","Bustingorrytitan","Camarasaurus","Chucarosaurus","Diplodocus","Europasaurus","Gandititan","Garumbatitan","Igai","Inawentu","Isisaurus","Jiangxititan","Jingiella","Lingwulong","Lishulong","Lusotitan","Mamenchisaurus","Maraapunisaurus","Massospondylus","Musankwa","Patagotitan","Plateosaurus","Qianlong","Qunkasaura","Rapetosaurus","Saltasaurus","Sauroposeidon","Sidersaura","Supersaurus","Tharosaurus","Tiamat","Titanomachya","Udelartitan","Uriash","Aletopelta","Arrhinoceratops","Calvarius","Chakisaurus","Datai","Edmontosaurus","Furcatoceratops","Gideonmantellia","Gremlin","Huayangosaurus","Hypsilophodon","Iguanodon","Kentrosaurus","Lambeosaurus","Maiasaura","Mantellisaurus","Minimocursor","Muttaburrasaurus","Oblitosaurus","Oryctodromeus","Pachyrhinosaurus","Platytholus","Protoceratops","Scelidosaurus","Spinops","Stegosaurus","Stellasaurus","Tarchia","Thyreosaurus","Triceratops","Vectidromeus","Yanbeilong","Yuxisaurus","Zuul","Ampelognathus","Auroraceratops","Camptosaurus","Dacentrurus","Diabloceratops","Equijubus","Gastonia","Gonkoken","Gryposaurus","Hylaeosaurus","Iani","Jakapil","Koshisaurus","Lanzhousaurus","Malefica","Menefeeceratops","Minqaria","Nasutoceratops","Olorotitan","Pachycephalosaurus","Planicoxa","Polacanthus","Saurolophus","Spicomellus","Stegoceras","Stegouros","Talenkauen","Tethyshadros","Tlatolophus","Utahceratops","Vectipelta","Yingshanosaurus","Zalmoxes"]);
 
-// "6 guesses + 1 hint" — shared by the victory subtitle and the social
-// share text so the pluralization logic only lives in one place.
-function guessHintPhrase() {
-  const n = S.guesses.length;
+// "N guesses[+ H hints]" — shared by the victory subtitle, the social
+// share text, and each leaderboard row so the pluralization logic only
+// lives in one place.
+function formatGuessHintPhrase(n, hints) {
   return n + ' guess' + (n!==1?'es':'') +
-    (S.hints > 0 ? ' + ' + S.hints + ' hint' + (S.hints>1?'s':'') : '');
+    (hints > 0 ? ' + ' + hints + ' hint' + (hints>1?'s':'') : '');
 }
+function guessHintPhrase() { return formatGuessHintPhrase(S.guesses.length, S.hints); }
 
 function showVictory() {
   const n = S.guesses.length;
