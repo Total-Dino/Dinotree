@@ -28,7 +28,7 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
    buttons instead of being confined to the space left over below them.
    #tree-wrap gets its padding-top set in JS (positionTreeWrap) to match
    #topbar's real rendered height. */
-#topbar{position:absolute;top:0;left:0;right:0;z-index:25;background:#000;padding:10px 14px 4px;display:flex;flex-direction:column;gap:2px}
+#topbar{position:absolute;top:0;left:0;right:0;z-index:25;background:#000;padding:10px 14px 0;display:flex;flex-direction:column;gap:0px}
 #input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0}
 #input-field-wrap{position:relative;flex:1;min-width:0}
 #btn-row{display:flex;gap:6px;flex-shrink:0}
@@ -44,7 +44,7 @@ button{background:#000;color:#00ff00;border:1px solid #00aa00;padding:5px 8px;fo
 button:hover{background:#001a00;border-color:#00ff00}
 #btn-row button{padding:0 10px}
 #status{font-size:11px;color:#005500;flex-shrink:0;display:flex;gap:14px;padding-left:2px;order:4}
-#message{font-size:14px;color:#cc3333;flex-shrink:0;min-height:6px;padding-left:2px;order:5}
+#message{font-size:14px;color:#cc3333;flex-shrink:0;min-height:2px;padding-left:2px;order:5}
 /* Exactly one scroll region: #tree-wrap. Everything else is fixed-height chrome.
    The SVG is rendered at true 1:1 scale (see renderTree) — never CSS-stretched
    to fit the container, so node boxes/text stay a constant physical size no
@@ -61,7 +61,13 @@ svg{display:block;margin:0 auto}
 }
 @media(pointer:coarse){
   #guess-input{padding:5px 10px;font-size:18px}
-  #btn-row button{padding:0 10px;font-size:9px}
+  /* Two-row layout: full-width search bar, buttons on their own row
+     beneath it — the input was getting squeezed by three buttons sharing
+     one row. Buttons share the row's width equally so nothing looks cramped. */
+  #input-row{flex-wrap:wrap}
+  #input-field-wrap{flex:1 1 100%}
+  #btn-row{flex:1 1 100%;margin-top:6px}
+  #btn-row button{flex:1;padding:6px 4px;font-size:11px}
 }
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);justify-content:center;align-items:center;z-index:50}
 #overlay.show{display:flex}
@@ -80,9 +86,18 @@ svg{display:block;margin:0 auto}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
 #vbox a.vlink:hover{background:#001a00}
-#v-share-row{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:8px}
-#v-share-pair{display:flex;gap:8px}
-.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #00ff00;color:#00ff00;padding:4px 14px;font-size:12px;letter-spacing:1px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap}
+/* All three victory actions (x, facebook, leaderboard) sit in one row now
+   instead of stacking — #v-share-pair uses display:contents so its two
+   children become direct flex items of #v-share-row, sitting alongside
+   the leaderboard link with no extra nesting box. flex-wrap is a safety
+   net for very narrow screens rather than the default layout. */
+/* Negative side margins let this row bleed into the dialog's own side
+   padding (#vbox has 32px each side) so all three buttons have a real
+   chance of fitting on one line on narrow phones, without changing the
+   padding around the rest of the dialog's content. */
+#v-share-row{margin:26px -14px 0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
+#v-share-pair{display:contents}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #00ff00;color:#00ff00;padding:4px 8px;font-size:11px;letter-spacing:.5px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap}
 .share-btn:hover{background:#001a00}
 .share-btn svg{flex-shrink:0}
 #clade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);justify-content:center;align-items:center;z-index:60;padding:20px}
@@ -140,7 +155,7 @@ svg{display:block;margin:0 auto}
         <a class="share-btn" href="#" onclick="shareVictory('x'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>share on x</a>
         <a class="share-btn" href="#" onclick="shareVictory('facebook'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.878h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>facebook</a>
       </div>
-      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to today's leaderboard</a>
+      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to leaderboard</a>
     </div>
   </div>
 </div>
@@ -872,7 +887,7 @@ function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
     node.children.forEach(c => shiftSubtree(c, shift));
   }
 
-  const result = layout(root, 14);
+  const result = layout(root, 6);
   let minX = Infinity, maxX = -Infinity, maxY = 0;
   result.rects.forEach(r => {
     minX = Math.min(minX, r.x0);
@@ -1296,22 +1311,8 @@ function showVictory() {
   }
   document.getElementById('v-share-row').style.display = S.won ? 'flex' : 'none';
   document.getElementById('overlay').classList.add('show');
-  // Size the x/facebook pair from the leaderboard button alone — each gets
-  // half its width (minus the gap between them) so the pair's combined
-  // width matches it exactly. Independent of the "learn more" link. Never
-  // shrinks a button below its own text's natural width, so "share on x"
-  // and "facebook" always stay on one line even if that widens the pair
-  // slightly past the leaderboard button.
-  if (S.won) {
-    const pair = document.getElementById('v-share-pair');
-    const shareBtns = pair.querySelectorAll('.share-btn');
-    shareBtns.forEach(btn => { btn.style.width = ''; });
-    const gap = parseFloat(getComputedStyle(pair).columnGap) || 0;
-    const boardBtn = document.getElementById('v-board-link');
-    boardBtn.style.width = '';
-    const halfWidth = (boardBtn.offsetWidth - gap) / 2;
-    shareBtns.forEach(btn => { btn.style.width = Math.max(halfWidth, btn.offsetWidth) + 'px'; });
-  }
+  // All three buttons now sit in one row and size to their own natural
+  // width (see #v-share-row/.share-btn CSS) — no matched-width logic needed.
 }
 
 // Spoiler-free by design: shares "I got the dino in N guesses" without
