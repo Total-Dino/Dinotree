@@ -71,7 +71,7 @@ svg{display:block;margin:0 auto}
 }
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);justify-content:center;align-items:center;z-index:50}
 #overlay.show{display:flex}
-/* Shared shell for every pop-up box (victory, clade info, leaderboard):
+/* Shared shell for every pop-up box (victory, clade info, high scores):
    border/background/relative-positioning plus its top-right close X live
    here so all three stay visually consistent as more get added. Each
    box's own #id rule below only sets what's specific to it (padding,
@@ -79,17 +79,17 @@ svg{display:block;margin:0 auto}
 .popup-box{position:relative;border:1px solid #00ff00;background:#000;box-sizing:border-box}
 .popup-close{position:absolute;top:8px;right:10px;font-size:20px;line-height:1;color:#00aa00;cursor:pointer;padding:4px}
 .popup-close:hover{color:#00ff00}
-#vbox{padding:28px 32px;max-width:440px;width:92%;text-align:center}
+#vbox{padding:28px 32px 14px;max-width:440px;width:92%;text-align:center}
 #vbox h2{font-size:clamp(20px,6vw,28px);margin-top:-12px;margin-bottom:10px;letter-spacing:1px;padding:0 34px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:1.3em;word-break:break-word}
 #v-art-wrap{display:none;padding:14px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
 #v-art{max-width:100%;max-height:340px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
 #vbox a.vlink:hover{background:#001a00}
-/* All three victory actions (x, facebook, leaderboard) sit in one row now
+/* All three victory actions (x, facebook, high scores) sit in one row now
    instead of stacking — #v-share-pair uses display:contents so its two
    children become direct flex items of #v-share-row, sitting alongside
-   the leaderboard link with no extra nesting box. flex-wrap is a safety
+   the high-scores link with no extra nesting box. flex-wrap is a safety
    net for very narrow screens rather than the default layout. */
 /* Negative side margins let this row bleed into the dialog's own side
    padding (#vbox has 32px each side) so all three buttons have a real
@@ -134,7 +134,7 @@ svg{display:block;margin:0 auto}
       <div id="btn-row">
         <button onclick="giveHint()">HINT</button>
         <button onclick="giveUp()">GIVE UP</button>
-        <button onclick="showBoard(false)">BOARD</button>
+        <button onclick="showBoard(false)">HIGH SCORES</button>
       </div>
     </div>
     <div id="status">
@@ -155,7 +155,7 @@ svg{display:block;margin:0 auto}
         <a class="share-btn" href="#" onclick="shareVictory('x'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>share on x</a>
         <a class="share-btn" href="#" onclick="shareVictory('facebook'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.878h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>facebook</a>
       </div>
-      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to leaderboard</a>
+      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to high scores</a>
     </div>
   </div>
 </div>
@@ -169,12 +169,13 @@ svg{display:block;margin:0 auto}
 <div id="board-overlay">
   <div id="board-box" class="popup-box">
     <span class="popup-close" onclick="hideBoard()">&times;</span>
-    <h2>TODAY'S TOP GUESSERS</h2>
+    <h2>TODAY'S HIGH SCORES</h2>
     <div id="board-entry">
       <input id="board-initials" maxlength="10" placeholder="Name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       <button onclick="submitScore()">ADD SCORE</button>
     </div>
     <div id="board-already" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">You've already added a score today. Come back tomorrow!</div>
+    <div id="board-error" style="display:none;color:#cc3333;font-size:12px;margin-bottom:12px"></div>
     <div id="board-list"></div>
   </div>
 </div>
@@ -437,7 +438,7 @@ function dateHash(s) {
 }
 
 // Central Time (America/Chicago) rather than UTC, so the daily dino and
-// the leaderboard both reset at midnight CT regardless of where a player
+// the high scores both reset at midnight CT regardless of where a player
 // is - the "America/Chicago" zone handles the CST/CDT switch on its own.
 function todayStr() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
@@ -445,9 +446,9 @@ function todayStr() {
   return get('year') + '-' + get('month') + '-' + get('day');
 }
 
-// ── LEADERBOARD CONFIG ───────────────────────────────────────────
+// ── HIGH SCORES CONFIG ───────────────────────────────────────────
 // Fill these in with your own Firebase project's keys (Firebase console →
-// Project settings → your web app's config) to turn the leaderboard on.
+// Project settings → your web app's config) to turn high scores on.
 // Until you do, the BOARD button still works, it'll just say the board
 // isn't configured yet instead of erroring out.
 const firebaseConfig = {
@@ -466,8 +467,8 @@ try {
   }
 } catch (err) { console.error('Firebase init failed:', err); }
 
-// ── LEADERBOARD ───────────────────────────────────────────────────
-// A public daily leaderboard. Entries are keyed by date, so yesterday's
+// ── HIGH SCORES ───────────────────────────────────────────────────
+// A public daily high scores list. Entries are keyed by date, so yesterday's
 // board simply stops being shown once the date rolls over - nothing
 // needs to be deleted or reset by hand. Only real wins are eligible
 // (never a give-up).
@@ -495,7 +496,7 @@ function showBoard(withEntry) {
   document.getElementById('board-entry').style.display = (withEntry && !already) ? 'flex' : 'none';
   document.getElementById('board-already').style.display = already ? 'block' : 'none';
   document.getElementById('board-overlay').classList.add('show');
-  loadLeaderboard();
+  loadHighScores();
   if (withEntry && !already) document.getElementById('board-initials').focus();
 }
 function hideBoard() {
@@ -504,10 +505,12 @@ function hideBoard() {
 
 async function submitScore() {
   const el = document.getElementById('board-initials');
+  const errEl = document.getElementById('board-error');
+  errEl.style.display = 'none';
   const initials = el.value.trim().slice(0, 10);
   if (!initials) return;
   if (isBlockedInitials(initials)) { el.value = ''; el.placeholder = 'try again'; return; }
-  if (typeof db === 'undefined' || !db) { alert("Leaderboard isn't set up yet."); return; }
+  if (typeof db === 'undefined' || !db) { alert("High scores aren't set up yet."); return; }
   el.disabled = true;
   try {
     await db.collection('scores').add({
@@ -520,17 +523,24 @@ async function submitScore() {
     markSubmittedToday();
     document.getElementById('board-entry').style.display = 'none';
     document.getElementById('board-already').style.display = 'block';
-    loadLeaderboard();
+    loadHighScores();
   } catch (err) {
     el.disabled = false;
-    console.error('Leaderboard submit failed:', err);
+    console.error('High scores submit failed:', err);
+    // Surface the failure instead of silently swallowing it - a
+    // permission-denied error (default Firestore security rules) is the
+    // most common cause and looks identical to "nothing happened" otherwise.
+    errEl.textContent = (err && err.code === 'permission-denied')
+      ? "Couldn't save your score - the high scores database rules are blocking writes."
+      : "Couldn't save your score. Please try again.";
+    errEl.style.display = 'block';
   }
 }
 
-async function loadLeaderboard() {
+async function loadHighScores() {
   const listEl = document.getElementById('board-list');
   listEl.textContent = 'Loading…';
-  if (typeof db === 'undefined' || !db) { listEl.textContent = '(leaderboard not configured yet)'; return; }
+  if (typeof db === 'undefined' || !db) { listEl.textContent = '(high scores not configured yet)'; return; }
   try {
     const snap = await db.collection('scores').where('date', '==', todayStr()).get();
     const rows = [];
@@ -543,8 +553,8 @@ async function loadLeaderboard() {
       formatGuessHintPhrase(r.guesses, r.hints) + '</div>'
     ).join('');
   } catch (err) {
-    listEl.textContent = 'Could not load the leaderboard.';
-    console.error('Leaderboard load failed:', err);
+    listEl.textContent = 'Could not load the high scores.';
+    console.error('High scores load failed:', err);
   }
 }
 
@@ -1274,7 +1284,7 @@ function renderTree() {
 const TOTALDINO_PAGES = new Set(["Achillobator","Albertosaurus","Anchiornis","Archaeopteryx","Baryonyx","Carcharodontosaurus","Coelophysis","Cryolophosaurus","Deinonychus","Diuqin","Dromaeosaurus","Eoabelisaurus","Fujianvenator","Herrerasaurus","Imperobator","Lythronax","Megalosaurus","Meraxes","Migmanychion","Nanuqsaurus","Oviraptor","Pectinodon","Rajasaurus","Sarcosaurus","Siats","Spinosaurus","Tarbosaurus","Torvosaurus","Tyrannosaurus","Yangchuanosaurus","Acrocanthosaurus","Alxasaurus","Appalachiosaurus","Austroraptor","Buitreraptor","Citipati","Concavenator","Deinocheirus","Dilophosaurus","Dornraptor","Dryptosaurus","Eoneophron","Gigantoraptor","Hesperornis","Kuru","Majungasaurus","Megapnosaurus","Mexidracon","Nanotyrannus","Ornithomimus","Ozraptor","Protathlitis","Riojavenatrix","Shuvuuia","Sinotyrannus","Stenonychosaurus","Tawa","Tyrannomimus","Velociraptor","Yutyrannus","Aardonyx","Abrosaurus","Alamosaurus","Apatosaurus","Ardetosaurus","Astrodon","Atlasaurus","Barapasaurus","Brachiosaurus","Brachytrachelopan","Brontosaurus","Bustingorrytitan","Camarasaurus","Chucarosaurus","Diplodocus","Europasaurus","Gandititan","Garumbatitan","Igai","Inawentu","Isisaurus","Jiangxititan","Jingiella","Lingwulong","Lishulong","Lusotitan","Mamenchisaurus","Maraapunisaurus","Massospondylus","Musankwa","Patagotitan","Plateosaurus","Qianlong","Qunkasaura","Rapetosaurus","Saltasaurus","Sauroposeidon","Sidersaura","Supersaurus","Tharosaurus","Tiamat","Titanomachya","Udelartitan","Uriash","Aletopelta","Arrhinoceratops","Calvarius","Chakisaurus","Datai","Edmontosaurus","Furcatoceratops","Gideonmantellia","Gremlin","Huayangosaurus","Hypsilophodon","Iguanodon","Kentrosaurus","Lambeosaurus","Maiasaura","Mantellisaurus","Minimocursor","Muttaburrasaurus","Oblitosaurus","Oryctodromeus","Pachyrhinosaurus","Platytholus","Protoceratops","Scelidosaurus","Spinops","Stegosaurus","Stellasaurus","Tarchia","Thyreosaurus","Triceratops","Vectidromeus","Yanbeilong","Yuxisaurus","Zuul","Ampelognathus","Auroraceratops","Camptosaurus","Dacentrurus","Diabloceratops","Equijubus","Gastonia","Gonkoken","Gryposaurus","Hylaeosaurus","Iani","Jakapil","Koshisaurus","Lanzhousaurus","Malefica","Menefeeceratops","Minqaria","Nasutoceratops","Olorotitan","Pachycephalosaurus","Planicoxa","Polacanthus","Saurolophus","Spicomellus","Stegoceras","Stegouros","Talenkauen","Tethyshadros","Tlatolophus","Utahceratops","Vectipelta","Yingshanosaurus","Zalmoxes"]);
 
 // "N guesses[+ H hints]" — shared by the victory subtitle, the social
-// share text, and each leaderboard row so the pluralization logic only
+// share text, and each high-scores row so the pluralization logic only
 // lives in one place.
 function formatGuessHintPhrase(n, hints) {
   return n + ' guess' + (n!==1?'es':'') +
