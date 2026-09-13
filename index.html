@@ -605,7 +605,13 @@ async function loadHighScores() {
 function positionTreeWrap() {
   const topbarEl = document.getElementById('topbar');
   const treeWrapEl = document.getElementById('tree-wrap');
-  treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + 16) + 'px';
+  // Desktop's topbar is one row (search bar + buttons together) and so is
+  // noticeably shorter than mobile's two-row layout; the same flat extra
+  // gap reads as less breathing room on the shorter bar, so desktop gets
+  // a bigger one to match how far below the buttons the root node sits
+  // on mobile.
+  const extraGap = window.matchMedia('(pointer: fine)').matches ? 32 : 16;
+  treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + extraGap) + 'px';
 }
 
 function init() {
