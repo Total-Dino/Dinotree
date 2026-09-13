@@ -60,7 +60,7 @@ svg{display:block;margin:0 auto}
   #message{max-width:560px;margin:0 auto;width:100%;padding-left:0}
 }
 @media(pointer:coarse){
-  #guess-input{padding:5px 10px;font-size:18px}
+  #guess-input{padding:9px 10px;font-size:18px}
   /* Two-row layout: full-width search bar, buttons on their own row
      beneath it — the input was getting squeezed by three buttons sharing
      one row. Buttons share the row's width equally so nothing looks cramped. */
@@ -84,8 +84,11 @@ svg{display:block;margin:0 auto}
 #v-art-wrap{display:none;padding:6px;margin:4px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
 #v-art{max-width:100%;max-height:min(520px,52vh);display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:8px;line-height:1.5}
-#vbox a.vlink{display:inline-block;margin-top:12px;color:#000;background:#00ff00;border:1px solid #00ff00;padding:12px 30px;font-size:15px;font-weight:bold;text-decoration:none;letter-spacing:1.5px;box-shadow:0 0 14px rgba(0,255,0,.35)}
+#vbox a.vlink{display:inline-block;margin-top:12px;color:#000;background:#00ff00;border:1px solid #00ff00;padding:8px 26px;font-size:15px;font-weight:bold;text-decoration:none;letter-spacing:1.5px;box-shadow:0 0 14px rgba(0,255,0,.35);line-height:1.25;text-align:center;max-width:100%;box-sizing:border-box}
 #vbox a.vlink:hover{background:#66ff66;border-color:#66ff66}
+@media(max-width:480px){
+  #vbox a.vlink{font-size:14px;padding:7px 20px}
+}
 /* All three victory actions (x, facebook, high scores) sit in one row now
    instead of stacking — #v-share-pair uses display:contents so its two
    children become direct flex items of #v-share-row, sitting alongside
@@ -602,7 +605,7 @@ async function loadHighScores() {
 function positionTreeWrap() {
   const topbarEl = document.getElementById('topbar');
   const treeWrapEl = document.getElementById('tree-wrap');
-  treeWrapEl.style.paddingTop = topbarEl.offsetHeight + 'px';
+  treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + 16) + 'px';
 }
 
 function init() {
@@ -1345,13 +1348,33 @@ function fitVictoryTitle() {
   }
 }
 
+// The learn-more button's text ("LEARN MORE ABOUT <NAME> \u2192") is allowed
+// to wrap, but only up to 2 lines - long genus names (20+ characters) can
+// otherwise push it to 3+ lines. Shrinks the font just enough to fit
+// within 2 lines' worth of height, rather than always using the smallest
+// size up front.
+const MIN_LINK_PX = 11;
+function fitVictoryLink() {
+  const el = document.getElementById('v-link');
+  el.style.fontSize = '';
+  const cs = getComputedStyle(el);
+  const padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  let size = parseFloat(cs.fontSize);
+  while (size > MIN_LINK_PX) {
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+    if (el.scrollHeight <= lineHeight * 2 + padV + 2) break;
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 function showVictory() {
   const n = S.guesses.length;
   document.getElementById('v-title').textContent = S.target.name;
   fitVictoryTitle();
   const subEl = document.getElementById('v-sub');
   subEl.textContent = S.won
-    ? ('Identified in ' + guessHintPhrase() + '.')
+    ? ('Found in ' + guessHintPhrase() + '.')
     : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
   subEl.style.color = S.won ? '' : '#ff3333';
 
@@ -1373,6 +1396,7 @@ function showVictory() {
     linkEl.href = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(S.target.name);
     linkEl.textContent = 'VIEW ON WIKIPEDIA \u2192';
   }
+  fitVictoryLink();
   document.getElementById('v-share-row').style.display = S.won ? 'flex' : 'none';
   document.getElementById('overlay').classList.add('show');
   // All three buttons now sit in one row and size to their own natural
