@@ -79,10 +79,10 @@ svg{display:block;margin:0 auto}
 .popup-box{position:relative;border:1px solid #00ff00;background:#000;box-sizing:border-box}
 .popup-close{position:absolute;top:8px;right:10px;font-size:20px;line-height:1;color:#00aa00;cursor:pointer;padding:4px}
 .popup-close:hover{color:#00ff00}
-#vbox{padding:28px 32px 14px;max-width:440px;width:92%;text-align:center}
-#vbox h2{font-size:clamp(20px,6vw,28px);margin-top:-12px;margin-bottom:10px;letter-spacing:1px;padding:0 34px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:1.3em;word-break:break-word}
+#vbox{padding:28px 32px 14px;max-width:480px;width:92%;text-align:center}
+#vbox h2{font-size:clamp(20px,6vw,28px);margin-top:-12px;margin-bottom:10px;letter-spacing:1px;padding:0 34px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:1.3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #v-art-wrap{display:none;padding:14px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
-#v-art{max-width:100%;max-height:340px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
+#v-art{max-width:100%;max-height:460px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
 #vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
 #vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
 #vbox a.vlink:hover{background:#001a00}
@@ -95,11 +95,17 @@ svg{display:block;margin:0 auto}
    padding (#vbox has 32px each side) so all three buttons have a real
    chance of fitting on one line on narrow phones, without changing the
    padding around the rest of the dialog's content. */
-#v-share-row{margin:26px -14px 0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
+#v-share-row{margin:26px -14px 0;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 #v-share-pair{display:contents}
-.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #00ff00;color:#00ff00;padding:4px 8px;font-size:11px;letter-spacing:.5px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #00ff00;color:#00ff00;padding:4px 8px;font-size:11px;letter-spacing:.5px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap;flex-shrink:0}
 .share-btn:hover{background:#001a00}
 .share-btn svg{flex-shrink:0}
+/* Narrow phones: shrink text/padding/icons first so the row fits without
+   scrolling; the #v-share-row overflow-x above is only the last resort. */
+@media(max-width:380px){
+  .share-btn{font-size:9.5px;padding:4px 6px;gap:3px}
+  .share-btn svg{width:11px;height:11px}
+}
 #clade-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);justify-content:center;align-items:center;z-index:60;padding:20px}
 #clade-overlay.show{display:flex}
 #clade-box{padding:22px 24px;max-width:420px;width:100%;text-align:left}
@@ -1292,9 +1298,26 @@ function formatGuessHintPhrase(n, hints) {
 }
 function guessHintPhrase() { return formatGuessHintPhrase(S.guesses.length, S.hints); }
 
+// Some genus names ("Micropachycephalosaurus", "Bustingorrytitan") are too
+// long to fit the dialog at the CSS clamp() size and would wrap or overflow.
+// Shrinks the title below that size, one px at a time, until it fits on one
+// line (floor of MIN_TITLE_PX keeps it legible; overflow/ellipsis in the CSS
+// is the fallback if a name is ever too long even at that floor).
+const MIN_TITLE_PX = 13;
+function fitVictoryTitle() {
+  const el = document.getElementById('v-title');
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > MIN_TITLE_PX) {
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 function showVictory() {
   const n = S.guesses.length;
   document.getElementById('v-title').textContent = S.target.name;
+  fitVictoryTitle();
   const subEl = document.getElementById('v-sub');
   subEl.textContent = S.won
     ? ('Identified in ' + guessHintPhrase() + '.')
