@@ -79,13 +79,13 @@ svg{display:block;margin:0 auto}
 .popup-box{position:relative;border:1px solid #00ff00;background:#000;box-sizing:border-box}
 .popup-close{position:absolute;top:8px;right:10px;font-size:20px;line-height:1;color:#00aa00;cursor:pointer;padding:4px}
 .popup-close:hover{color:#00ff00}
-#vbox{padding:28px 32px 14px;max-width:480px;width:92%;text-align:center}
-#vbox h2{font-size:clamp(20px,6vw,28px);margin-top:-12px;margin-bottom:10px;letter-spacing:1px;padding:0 34px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:1.3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#v-art-wrap{display:none;padding:14px;margin:10px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
-#v-art{max-width:100%;max-height:460px;display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
-#vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:16px;line-height:1.6}
-#vbox a.vlink{display:inline-block;margin-top:10px;color:#00ff00;border:1px solid #00ff00;padding:7px 18px;font-size:12px;text-decoration:none;letter-spacing:1px}
-#vbox a.vlink:hover{background:#001a00}
+#vbox{padding:22px 26px 12px;max-width:480px;width:92%;text-align:center}
+#vbox h2{font-size:clamp(24px,9vw,44px);margin-top:-4px;margin-bottom:4px;letter-spacing:1px;padding:0 34px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:1.2em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#v-art-wrap{display:none;padding:6px;margin:4px 0;background:radial-gradient(ellipse at center, rgba(0,255,0,.55) 0%, rgba(0,255,0,.28) 40%, rgba(0,255,0,0) 78%)}
+#v-art{max-width:100%;max-height:min(520px,52vh);display:block;margin:0 auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.7))}
+#vbox .vsub{font-size:12px;color:#00aa00;margin-bottom:8px;line-height:1.5}
+#vbox a.vlink{display:inline-block;margin-top:12px;color:#000;background:#00ff00;border:1px solid #00ff00;padding:12px 30px;font-size:15px;font-weight:bold;text-decoration:none;letter-spacing:1.5px;box-shadow:0 0 14px rgba(0,255,0,.35)}
+#vbox a.vlink:hover{background:#66ff66;border-color:#66ff66}
 /* All three victory actions (x, facebook, high scores) sit in one row now
    instead of stacking — #v-share-pair uses display:contents so its two
    children become direct flex items of #v-share-row, sitting alongside
@@ -95,7 +95,7 @@ svg{display:block;margin:0 auto}
    padding (#vbox has 32px each side) so all three buttons have a real
    chance of fitting on one line on narrow phones, without changing the
    padding around the rest of the dialog's content. */
-#v-share-row{margin:26px -14px 0;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#v-share-row{margin:16px -14px 0;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 #v-share-pair{display:contents}
 .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #00ff00;color:#00ff00;padding:4px 8px;font-size:11px;letter-spacing:.5px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap;flex-shrink:0}
 .share-btn:hover{background:#001a00}
@@ -153,9 +153,9 @@ svg{display:block;margin:0 auto}
   <div id="vbox" class="popup-box">
     <span class="popup-close" onclick="document.getElementById('overlay').classList.remove('show')">&times;</span>
     <h2 id="v-title"></h2>
-    <div id="v-art-wrap"><img id="v-art" alt="" /></div>
     <div class="vsub" id="v-sub"></div>
-    <a class="vlink" id="v-link" href="#" target="_blank">LEARN MORE &rarr;</a><br>
+    <div id="v-art-wrap"><img id="v-art" alt="" /></div>
+    <a class="vlink" id="v-link" href="#" target="_blank">LEARN MORE &rarr;</a>
     <div id="v-share-row" style="display:none">
       <div id="v-share-pair">
         <a class="share-btn" href="#" onclick="shareVictory('x'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>share on x</a>
@@ -178,9 +178,10 @@ svg{display:block;margin:0 auto}
     <h2>TODAY'S HIGH SCORES</h2>
     <div id="board-entry">
       <input id="board-initials" maxlength="10" placeholder="Name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      <button onclick="submitScore()">ADD SCORE</button>
+      <button id="board-submit-btn" onclick="submitScore()">ADD SCORE</button>
     </div>
     <div id="board-already" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">You've already added a score today. Come back tomorrow!</div>
+    <div id="board-success" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">Score added! Come back tomorrow for a new dino.</div>
     <div id="board-error" style="display:none;color:#cc3333;font-size:12px;margin-bottom:12px"></div>
     <div id="board-list"></div>
   </div>
@@ -501,22 +502,46 @@ function showBoard(withEntry) {
   const already = withEntry && alreadySubmittedToday();
   document.getElementById('board-entry').style.display = (withEntry && !already) ? 'flex' : 'none';
   document.getElementById('board-already').style.display = already ? 'block' : 'none';
+  // Reset per-open state: the success/error messages and the submit
+  // button's disabled state are only meaningful for the entry attempt
+  // that produced them, not for whatever the board looked like last time.
+  document.getElementById('board-success').style.display = 'none';
+  document.getElementById('board-error').style.display = 'none';
+  const submitBtn = document.getElementById('board-submit-btn');
+  const initialsEl = document.getElementById('board-initials');
+  submitBtn.disabled = false;
+  initialsEl.disabled = false;
   document.getElementById('board-overlay').classList.add('show');
   loadHighScores();
-  if (withEntry && !already) document.getElementById('board-initials').focus();
+  if (withEntry && !already) initialsEl.focus();
 }
 function hideBoard() {
   document.getElementById('board-overlay').classList.remove('show');
 }
 
 async function submitScore() {
+  const btn = document.getElementById('board-submit-btn');
   const el = document.getElementById('board-initials');
   const errEl = document.getElementById('board-error');
+  // Guard against duplicate entries two ways: (1) if a submission for
+  // today already went through (e.g. a stale/reopened dialog), refuse
+  // outright; (2) disable the button synchronously, before the await
+  // below, so a rapid double-click can't fire a second submitScore()
+  // call while the first is still in flight - a disabled button doesn't
+  // dispatch click events, which is what was letting someone add as many
+  // scores as they wanted by clicking quickly.
+  if (btn.disabled) return;
+  if (alreadySubmittedToday()) {
+    document.getElementById('board-entry').style.display = 'none';
+    document.getElementById('board-already').style.display = 'block';
+    return;
+  }
   errEl.style.display = 'none';
   const initials = el.value.trim().slice(0, 10);
   if (!initials) return;
   if (isBlockedInitials(initials)) { el.value = ''; el.placeholder = 'try again'; return; }
   if (typeof db === 'undefined' || !db) { alert("High scores aren't set up yet."); return; }
+  btn.disabled = true;
   el.disabled = true;
   try {
     await db.collection('scores').add({
@@ -528,9 +553,15 @@ async function submitScore() {
     });
     markSubmittedToday();
     document.getElementById('board-entry').style.display = 'none';
-    document.getElementById('board-already').style.display = 'block';
+    // Distinct from #board-already: that message is the "you can't do this
+    // again" gate shown when reopening the dialog after already having
+    // submitted. This one confirms the submission that was JUST made, so
+    // a first-time entrant doesn't see "you've ALREADY added a score"
+    // about the score they're only just now adding.
+    document.getElementById('board-success').style.display = 'block';
     loadHighScores();
   } catch (err) {
+    btn.disabled = false;
     el.disabled = false;
     console.error('High scores submit failed:', err);
     // Surface the failure instead of silently swallowing it - a
