@@ -807,7 +807,7 @@ function buildVisible(rawRoot) {
     // Pass through single-child invisible nodes
     const results = [];
     for (const [,c] of rnode.ch) { const r = findNext(c); if(r) results.push(r); }
-    return results.length === 1 ? results[0] : (results.length === 0 ? null : results[0]);
+    return results.length === 0 ? null : results[0];
   }
 
   function build(rnode) {
