@@ -614,6 +614,18 @@ function positionTreeWrap() {
   treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + extraGap) + 'px';
 }
 
+// Tells the parent page (totaldino.com/dinotree, embedding this via
+// Wix's "Embed a Site" iframe) the precise instant the search input
+// gains or loses focus, so the parent can freeze/restore its own
+// scroll position around the keyboard opening — see the touchend and
+// blur handlers below for where this actually gets called. Silently
+// does nothing if this file is ever opened outside that iframe.
+function notifyDinotreeKeyboard(open) {
+  try {
+    window.parent.postMessage({ source: 'dinotree', keyboardOpen: open }, '*');
+  } catch (e) {}
+}
+
 function init() {
   positionTreeWrap();
   if (window.ResizeObserver) {
@@ -645,6 +657,7 @@ function init() {
   if (window.matchMedia('(pointer: coarse)').matches) {
     inputEl.addEventListener('touchend', function (e) {
       e.preventDefault();
+      notifyDinotreeKeyboard(true); // let the parent freeze its scroll position before the keyboard actually opens
       inputEl.focus({ preventScroll: true });
     }, { passive: false });
   }
@@ -679,6 +692,7 @@ function init() {
   });
   inputEl.addEventListener('input', () => showSuggestions(inputEl.value));
   inputEl.addEventListener('blur', () => { setTimeout(hideSuggestions, 150); }); // delay so a tap on a suggestion still registers
+  inputEl.addEventListener('blur', () => notifyDinotreeKeyboard(false));
   suggBox.addEventListener('mousedown', e => e.preventDefault()); // keep focus/keyboard open through the tap
   suggBox.addEventListener('click', e => {
     const item = e.target.closest('.sugg-item');
