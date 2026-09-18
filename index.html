@@ -634,6 +634,20 @@ function init() {
   renderTree(); updateStatus();
   const inputEl = document.getElementById('guess-input');
   if (window.matchMedia('(pointer: coarse)').matches) inputEl.placeholder = 'Enter a dinosaur...'; // shorter on mobile so it doesn't get clipped by the narrower search bar
+
+  // On iOS, focusing an input nested inside an iframe makes the TOP-LEVEL
+  // page auto-scroll to bring it above the keyboard, as a native/engine-
+  // level part of handling focus — happening before any JS on the wrapper
+  // page (or here) can react to it. The only way to stop it is to prevent
+  // the native tap-triggered focus from happening at all, and instead call
+  // focus() ourselves with preventScroll, which suppresses that built-in
+  // scroll-into-view behavior entirely, including for the parent document.
+  if (window.matchMedia('(pointer: coarse)').matches) {
+    inputEl.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      inputEl.focus({ preventScroll: true });
+    }, { passive: false });
+  }
   function submitNow() {
     const mobile = window.matchMedia('(pointer: coarse)').matches;
     // We tried keeping focus and toggling `readonly` to auto-hide/reopen the
