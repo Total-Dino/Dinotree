@@ -502,6 +502,7 @@ function markSubmittedToday() {
 }
 
 function showBoard(withEntry) {
+  notifyDinotreeDock();
   const already = withEntry && alreadySubmittedToday();
   document.getElementById('board-entry').style.display = (withEntry && !already) ? 'flex' : 'none';
   document.getElementById('board-already').style.display = already ? 'block' : 'none';
@@ -626,6 +627,19 @@ function notifyDinotreeKeyboard(open) {
   } catch (e) {}
 }
 
+// Tells the parent page to snap the game into its docked position under
+// the title, for interactions that change what's on screen (a hint
+// reveals a new tree node; opening the high-scores board) but don't
+// involve the keyboard, so notifyDinotreeKeyboard() above never fires for
+// them. Silently does nothing if this file is ever opened outside the
+// Wix iframe, or on the parent's desktop layout (it just ignores the
+// message there).
+function notifyDinotreeDock() {
+  try {
+    window.parent.postMessage({ source: 'dinotree', requestDock: true }, '*');
+  } catch (e) {}
+}
+
 function init() {
   positionTreeWrap();
   if (window.ResizeObserver) {
@@ -742,6 +756,7 @@ function submitGuess() {
 
 function giveHint() {
   if (S.won || S.over || S.revealed >= S.target.lineage.length - 2) return;
+  notifyDinotreeDock();
   S.revealed++;
   S.hints++;
   // Force only this specific node visible — not the whole path
