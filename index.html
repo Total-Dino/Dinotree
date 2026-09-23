@@ -653,14 +653,16 @@ function notifyDinotreeDock() {
   const RESIST_RELEASE_PX = 90;
   const RESIST_DAMP_PX = 30;
 
-  const parentState = { dockY: 0, docked: false, scrollY: 0, magnetPx: 60 };
+  const parentState = { dockY: 0, scrollY: 0, magnetPx: 60 };
   let tracking = false, released = false, startY = null, startScrollY = 0;
 
   window.addEventListener('message', (e) => {
     const d = e.data;
     if (!d || d.source !== 'dt-parent') return;
+    // dockY is the GAME's own resting point below the title, forwarded
+    // fresh from the parent on every scroll tick — not some fixed value,
+    // since the page layout (and so this offset) can shift on resize.
     parentState.dockY = d.dockY;
-    parentState.docked = d.docked;
     parentState.scrollY = d.scrollY;
     parentState.magnetPx = d.magnetPx;
   });
@@ -678,7 +680,7 @@ function notifyDinotreeDock() {
   document.addEventListener('touchstart', (e) => {
     if (!e.touches.length) return;
     const d = parentState.scrollY - parentState.dockY;
-    tracking = parentState.docked && d >= 0 && d < parentState.magnetPx && atTreeTop();
+    tracking = d >= 0 && d < parentState.magnetPx && atTreeTop();
     released = false;
     if (tracking) {
       startY = e.touches[0].clientY;
