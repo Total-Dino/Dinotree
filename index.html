@@ -644,26 +644,41 @@ function notifyDinotreeDock() {
 // resistance effect when the game is docked full-screen and someone tries
 // to swipe down (to scroll up and see the "how it works" text above) - the
 // parent has no way to see touches happening inside this iframe on its
-// own, since it's a separate embedded page. Only actually blocks the
-// default touch behavior once the finger has moved down past a small
-// threshold, so ordinary taps (tree nodes, buttons, the search bar) are
-// completely unaffected.
+// own, since it's a separate embedded page.
+//
+// This file never decides on its own whether to intercept a swipe - it
+// waits for the parent to say so (dockArm), because only the parent knows
+// whether resistance is actually needed right now. Until told otherwise,
+// or once the parent says the resistance is done (dockRelease) for this
+// same swipe, the browser's own native scrolling is left completely
+// alone - which is what gives it real momentum/inertia instead of a
+// jerky, manually-driven feel.
 let dockTouchStartY = null;
+let dockArmedByHost = false;
 function notifyDinotreeDockTouch(phase, y) {
   try {
     window.parent.postMessage({ source: 'dinotree', dockTouch: { phase: phase, y: y } }, '*');
   } catch (e) {}
 }
+window.addEventListener('message', function (e) {
+  const d = e.data;
+  if (!d || !d.dtHost) return;
+  if (typeof d.dockArm === 'boolean') dockArmedByHost = d.dockArm;
+  if (d.dockRelease) dockArmedByHost = false;
+});
 document.addEventListener('touchstart', function (e) {
   if (!e.touches.length) return;
   dockTouchStartY = e.touches[0].clientY;
+  dockArmedByHost = false; // reset until the parent replies for this swipe
   notifyDinotreeDockTouch('start', dockTouchStartY);
 }, { passive: true });
 document.addEventListener('touchmove', function (e) {
   if (dockTouchStartY === null || !e.touches.length) return;
   const y = e.touches[0].clientY;
-  if (y - dockTouchStartY > 8) e.preventDefault();
-  notifyDinotreeDockTouch('move', y);
+  if (dockArmedByHost) {
+    if (y - dockTouchStartY > 8) e.preventDefault();
+    notifyDinotreeDockTouch('move', y);
+  }
 }, { passive: false });
 document.addEventListener('touchend', function () {
   dockTouchStartY = null;
