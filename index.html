@@ -640,6 +640,40 @@ function notifyDinotreeDock() {
   } catch (e) {}
 }
 
+// Forwards raw touch-drag info to the parent page so IT can apply a swipe
+// resistance effect when the game is docked full-screen and someone tries
+// to swipe down (to scroll up and see the "how it works" text above) - the
+// parent has no way to see touches happening inside this iframe on its
+// own, since it's a separate embedded page. Only actually blocks the
+// default touch behavior once the finger has moved down past a small
+// threshold, so ordinary taps (tree nodes, buttons, the search bar) are
+// completely unaffected.
+let dockTouchStartY = null;
+function notifyDinotreeDockTouch(phase, y) {
+  try {
+    window.parent.postMessage({ source: 'dinotree', dockTouch: { phase: phase, y: y } }, '*');
+  } catch (e) {}
+}
+document.addEventListener('touchstart', function (e) {
+  if (!e.touches.length) return;
+  dockTouchStartY = e.touches[0].clientY;
+  notifyDinotreeDockTouch('start', dockTouchStartY);
+}, { passive: true });
+document.addEventListener('touchmove', function (e) {
+  if (dockTouchStartY === null || !e.touches.length) return;
+  const y = e.touches[0].clientY;
+  if (y - dockTouchStartY > 8) e.preventDefault();
+  notifyDinotreeDockTouch('move', y);
+}, { passive: false });
+document.addEventListener('touchend', function () {
+  dockTouchStartY = null;
+  notifyDinotreeDockTouch('end', 0);
+}, { passive: true });
+document.addEventListener('touchcancel', function () {
+  dockTouchStartY = null;
+  notifyDinotreeDockTouch('end', 0);
+}, { passive: true });
+
 function init() {
   positionTreeWrap();
   if (window.ResizeObserver) {
