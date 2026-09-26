@@ -713,16 +713,39 @@ function init() {
   // On iOS, focusing an input nested inside an iframe makes the TOP-LEVEL
   // page auto-scroll to bring it above the keyboard, as a native/engine-
   // level part of handling focus — happening before any JS on the wrapper
-  // page (or here) can react to it. The only way to stop it is to prevent
-  // the native tap-triggered focus from happening at all, and instead call
-  // focus() ourselves with preventScroll, which suppresses that built-in
-  // scroll-into-view behavior entirely, including for the parent document.
+  // page (or here) can react to it. `preventScroll` on focus() suppresses
+  // this for the input's own document, but does not reliably suppress it
+  // for the ANCESTOR page when focus crosses an iframe boundary — that
+  // part of the browser's behavior isn't controllable from script.
+  // What we CAN control is timing: we used to tell the parent to freeze
+  // scroll on touchend, right before calling focus() — leaving it only a
+  // few milliseconds (a cross-frame message round trip) to actually get
+  // the freeze in place before the native scroll-into-view fires. Telling
+  // it on touchstart instead gives it the whole duration of the press.
   if (window.matchMedia('(pointer: coarse)').matches) {
+    let inputTapStartY = null;
+    inputEl.addEventListener('touchstart', function (e) {
+      if (!e.touches.length) return;
+      inputTapStartY = e.touches[0].clientY;
+      notifyDinotreeKeyboard(true);
+    }, { passive: true });
+    inputEl.addEventListener('touchmove', function (e) {
+      if (inputTapStartY === null || !e.touches.length) return;
+      if (Math.abs(e.touches[0].clientY - inputTapStartY) > 10) {
+        // this turned into a drag, not a tap - the keyboard isn't opening after all
+        inputTapStartY = null;
+        notifyDinotreeKeyboard(false);
+      }
+    }, { passive: true });
     inputEl.addEventListener('touchend', function (e) {
       e.preventDefault();
-      notifyDinotreeKeyboard(true); // let the parent freeze its scroll position before the keyboard actually opens
+      if (inputTapStartY === null) return; // already cancelled above
+      inputTapStartY = null;
       inputEl.focus({ preventScroll: true });
     }, { passive: false });
+    inputEl.addEventListener('touchcancel', function () {
+      if (inputTapStartY !== null) { inputTapStartY = null; notifyDinotreeKeyboard(false); }
+    });
   }
   function submitNow() {
     const mobile = window.matchMedia('(pointer: coarse)').matches;
