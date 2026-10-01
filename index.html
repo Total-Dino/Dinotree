@@ -137,6 +137,8 @@ svg{display:block;margin:0 auto}
 .tn{fill:#001400;stroke:#00ff00;stroke-width:1}.wn{fill:#00ff00;stroke:#00ff00;stroke-width:2}.ln{fill:#1a0000;stroke:#aa2200;stroke-width:1.5}
 .st{fill:#009900;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:600}.bt{fill:#00aa00;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}.wt{fill:#000;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold;font-style:italic}
 .lt{fill:#aa2200;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}.tt{fill:#00ff00;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold}.nnew{opacity:0}
+#v-sub a{color:#00ff00;text-decoration:underline;cursor:pointer}
+#v-sub a:hover{color:#66ff66}
 </style>
 </head>
 <body>
@@ -170,14 +172,12 @@ svg{display:block;margin:0 auto}
     <a class="vlink" id="v-link" href="#" target="_blank">LEARN MORE &rarr;</a>
     <div id="v-share-row" style="display:none">
       <div id="v-share-pair">
-        <a class="share-btn" id="v-share" href="#" onclick="shareResult(); return false;">share</a>
         <a class="share-btn" href="#" onclick="shareVictory('x'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>share on x</a>
         <a class="share-btn" href="#" onclick="shareVictory('facebook'); return false;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M22 12.06C22 6.505 17.523 2 12 2S2 6.505 2 12.06c0 5.02 3.657 9.184 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.878h2.773l-.443 2.91h-2.33V22c4.78-.756 8.437-4.92 8.437-9.94z"/></svg>facebook</a>
       </div>
-      <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to high scores</a>
     </div>
     <div style="margin-top:8px"><a class="share-btn" id="v-again" href="#" onclick="startPractice(); return false;">practice: play another dino</a></div>
-    <div class="vsub next-dino" style="margin:12px 0 -4px;color:#ff3333;font-weight:bold"></div>
+    <div class="vsub next-dino" style="margin:12px 0 -4px;color:#ff3333;font-weight:bold;font-size:14px"></div>
   </div>
 </div>
 <div id="clade-overlay">
@@ -199,7 +199,7 @@ svg{display:block;margin:0 auto}
     <div id="board-success" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">Score added! Come back tomorrow for a new dino.</div>
     <div id="board-error" style="display:none;color:#cc3333;font-size:12px;margin-bottom:12px"></div>
     <div id="board-list"></div>
-    <div class="next-dino" style="text-align:center;font-size:12px;color:#ff3333;font-weight:bold;margin:14px 0 -10px"></div>
+    <div class="next-dino" style="text-align:center;font-size:14px;color:#ff3333;font-weight:bold;margin:14px 0 -10px"></div>
   </div>
 </div>
 
@@ -795,26 +795,6 @@ function startPractice() {
   document.getElementById('tree-wrap').scrollTop = 0;
 }
 
-// ── SHARING: spoiler-free, Wordle-style ──────────────────────
-function shareText(withUrl) {
-  const t = S.target.lineage, max = Math.max(1, t.length - 2), pn = dayNumber(todayStr()) + 1;
-  const bar = lca => { const f = 1 + Math.round(Math.min(1, Math.max(0, lca) / max) * 4); return '🟩'.repeat(f) + '⬛'.repeat(5 - f); };
-  const rows = S.guesses.map(g => bar(g.lcaIdx)).concat('🟩🟩🟩🟩🟩');
-  return ['Dinotree' + (pn > 0 ? ' #' + pn : '') + ' 🦖', '🌳 ' + guessHintPhrase()].concat(rows, withUrl ? [GAME_URL] : []).join('\n');
-}
-async function shareResult() {
-  const text = shareText(true), btn = document.getElementById('v-share');
-  try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-  let ok = false;
-  try { await navigator.clipboard.writeText(text); ok = true; }
-  catch (e) {
-    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta); ta.select(); try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
-  }
-  if (!ok) { prompt('Copy your result:', text); return; }
-  btn.textContent = 'copied!'; setTimeout(() => { btn.textContent = 'share'; }, 1800);
-}
-
 function init() {
   positionTreeWrap();
   if (window.ResizeObserver) {
@@ -1239,38 +1219,51 @@ function renderTree() {
   // which isn't usable drawing space, so subtract it back out.
   const availW = (treeWrapEl.clientWidth ? treeWrapEl.clientWidth - 28 : 0) || (isMobile ? 340 : 800);
 
-  // Actually runs the real collision-aware layout at a trial compression
-  // level and measures the resulting width — this is the true width, not
-  // an estimate, since box size AND gap size both genuinely change what
-  // the algorithm produces.
-  function widthAt(s) {
-    const { gScale, bScale } = paramsFromS(s);
-    const nhS = BASE_NH * bScale, lhS = BASE_LH * bScale, sgapS = BASE_SGAP * bScale;
-    const gapS = Math.max(4, BASE_GAP * gScale);
-    const nwS = lbl => nwAt(lbl, bScale);
-    const { minX, maxX } = layoutTree(visRoot, lhS, nhS, sgapS, MAX_CLUSTER_COLS, nwS, labelOf, gapS);
-    return (maxX - minX) + GUTTER * 2;
+  // ── Fitting ──
+  // metricsAt() runs the real collision-aware layout at a trial setting and measures it.
+  //   s = gap/box compression (0..2) - as before, solved against the available WIDTH
+  //   v = level-spacing squash (VMIN..1) - flatter tree, text stays full size
+  //   k = extra uniform shrink of boxes + text (down to MINFONT) - only when squashing alone can't fit the HEIGHT
+  // The desktop iframe is height-limited (5:4), so there the tree must fit vertically too;
+  // on phones availH is Infinity (they scroll), which leaves k = v = 1 and the old behaviour.
+  const VMIN = 0.6, MINFONT = 8;
+  const hAvail = treeWrapEl.clientHeight - (parseFloat(treeWrapEl.style.paddingTop) || 0) - 8;
+  const availH = (isMobile || hAvail < 120) ? Infinity : hAvail;
+  function metricsAt(s, k, v) {
+    const p = paramsFromS(s), bS = p.bScale * k;
+    const r = layoutTree(visRoot, BASE_LH * bS * v, BASE_NH * bS, BASE_SGAP * bS, MAX_CLUSTER_COLS, lbl => nwAt(lbl, bS), labelOf, Math.max(4, BASE_GAP * p.gScale));
+    return { w: (r.maxX - r.minX) + GUTTER * 2, h: r.maxY + 20 };
   }
-
-  // Binary search for the smallest s (least total compression) that fits —
-  // guarantees the tree stays within the screen instead of overflowing.
-  let s;
-  if (widthAt(0) <= availW) {
-    s = 0; // no compression needed
-  } else if (widthAt(2) > availW) {
-    s = 2; // pathological case — best effort even at max compression
-  } else {
+  function solveS(k) { // smallest compression whose WIDTH fits (2 = best effort)
+    if (metricsAt(0, k, 1).w <= availW) return 0;
+    if (metricsAt(2, k, 1).w > availW) return 2;
     let lo = 0, hi = 2;
-    for (let i = 0; i < 12; i++) {
-      const mid = (lo + hi) / 2;
-      if (widthAt(mid) <= availW) hi = mid; else lo = mid;
+    for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (metricsAt(mid, k, 1).w <= availW) hi = mid; else lo = mid; }
+    return hi;
+  }
+  let s = solveS(1), k = 1, v = 1;
+  if (metricsAt(s, 1, 1).h > availH) {
+    if (metricsAt(s, 1, VMIN).h <= availH) { // squash the levels just enough
+      let lo = VMIN, hi = 1;
+      for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (metricsAt(s, 1, mid).h <= availH) lo = mid; else hi = mid; }
+      v = lo;
+    } else { // fully squashed and still too tall: shrink boxes + text, but never below MINFONT - past that it
+      v = VMIN;   // only makes the text unreadable without making the tree fit, so the rest just scrolls.
+      const fontAt = kk => BASE_FONT * paramsFromS(solveS(kk)).bScale * kk;
+      let kLo = 1; // smallest k that keeps the text legible (narrower boxes free up width, so gaps relax back out)
+      if (fontAt(1) > MINFONT) { let a = 0.2, b = 1; for (let i = 0; i < 8; i++) { const mid = (a + b) / 2; if (fontAt(mid) >= MINFONT) b = mid; else a = mid; } kLo = b; }
+      if (kLo < 1 && metricsAt(solveS(kLo), kLo, VMIN).h <= availH) {
+        let lo = kLo, hi = 1;
+        for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (metricsAt(solveS(mid), mid, VMIN).h <= availH) lo = mid; else hi = mid; }
+        k = lo; s = solveS(k);
+      }
     }
-    s = hi;
   }
 
-  const { gScale, bScale } = paramsFromS(s);
+  const { gScale, bScale: bs } = paramsFromS(s);
+  const bScale = bs * k;
   const NH   = BASE_NH * bScale;
-  const LH   = BASE_LH * bScale;
+  const LH   = BASE_LH * bScale * v;
   const SGAP = BASE_SGAP * bScale;
   const FONT = BASE_FONT * bScale;
   const GAP  = Math.max(4, BASE_GAP * gScale);
@@ -1614,9 +1607,8 @@ function showVictory() {
   document.getElementById('v-title').textContent = S.target.name;
   fitVictoryTitle();
   const subEl = document.getElementById('v-sub');
-  subEl.textContent = S.won
-    ? ('Found in ' + guessHintPhrase() + '.')
-    : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
+  if (S.won && !S.practice) subEl.innerHTML = 'Found in ' + guessHintPhrase() + ' - <a href="#" id="v-board-link" onclick="showBoard(true); return false;">add to high scores</a>';
+  else subEl.textContent = S.won ? ('Found in ' + guessHintPhrase() + '.') : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
   subEl.style.color = S.won ? '' : '#ff3333';
 
   // Paleoart — always pulls the current version directly from Commons, so
@@ -1639,7 +1631,7 @@ function showVictory() {
   }
   fitVictoryLink();
   const st = loadStats(), pr = S.practice;
-  document.getElementById('v-streak').textContent = pr ? '' : (S.won ? '🔥 Streak: ' + st.streak + (st.streak === 1 ? ' day' : ' days') : 'Streak reset') + (st.best ? ' · Best: ' + st.best : '');
+  document.getElementById('v-streak').textContent = pr ? '' : (S.won ? 'Current streak: ' + st.streak + (st.streak === 1 ? ' day' : ' days') : 'Streak reset') + (st.best ? ' · Best: ' + st.best : '');
   document.getElementById('v-share-row').style.display = (S.won && !pr) ? 'flex' : 'none';
   tickNext();
   document.getElementById('overlay').classList.add('show');
@@ -1660,7 +1652,7 @@ function showVictory() {
 // <head> are what actually needs to look good, not the "quote" param.
 const GAME_URL = 'https://totaldino.com/dinotree';
 function shareVictory(network) {
-  const text = shareText(false);
+  const text = "I got the dino in " + guessHintPhrase() + "! \ud83e\udd96";
   const shareUrl = network === 'x'
     ? 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(GAME_URL) + '&hashtags=Dinosaurs,Paleontology'
     : 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL) + '&quote=' + encodeURIComponent(text);
@@ -1668,6 +1660,12 @@ function shareVictory(network) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') ['overlay','clade-overlay','board-overlay'].forEach(id => document.getElementById(id).classList.remove('show')); });
+// Desktop only: re-fit the tree if the window/iframe is resized (phones fire resize for the keyboard, so they're left alone).
+let resizeT = null;
+window.addEventListener('resize', () => {
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  clearTimeout(resizeT); resizeT = setTimeout(() => { if (drawnNodes) renderTree(); }, 200);
+});
 init();
 </script>
 </body>
