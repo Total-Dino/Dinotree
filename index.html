@@ -43,6 +43,7 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
 button{background:#000;color:#00ff00;border:1px solid #00aa00;padding:5px 8px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:10px;cursor:pointer;white-space:nowrap}
 button:hover{background:#001a00;border-color:#00ff00}
 #btn-row button{padding:0 18px;font-size:14px;letter-spacing:.8px}
+#give-up-btn::after{content:'PRACTICE';display:block;height:0;overflow:hidden;visibility:hidden}
 #status{font-size:11px;color:#00aa00;flex-shrink:0;display:flex;gap:14px;padding-left:2px;order:4}
 #message{font-size:14px;color:#cc3333;flex-shrink:0;min-height:2px;padding-left:2px;order:5}
 /* Exactly one scroll region: #tree-wrap. Everything else is fixed-height chrome.
@@ -176,8 +177,8 @@ svg{display:block;margin:0 auto}
       </div>
       <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to high scores</a>
     </div>
-    <div class="vsub" id="v-next" style="margin:14px 0 0"></div>
     <div style="margin-top:8px"><a class="share-btn" id="v-again" href="#" onclick="startPractice(); return false;">practice: play another dino</a></div>
+    <div class="vsub next-dino" style="margin:12px 0 4px"></div>
   </div>
 </div>
 <div id="clade-overlay">
@@ -199,6 +200,7 @@ svg{display:block;margin:0 auto}
     <div id="board-success" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">Score added! Come back tomorrow for a new dino.</div>
     <div id="board-error" style="display:none;color:#cc3333;font-size:12px;margin-bottom:12px"></div>
     <div id="board-list"></div>
+    <div class="next-dino" style="text-align:center;font-size:12px;color:#00aa00;margin-top:14px"></div>
   </div>
 </div>
 
@@ -519,6 +521,7 @@ function markSubmittedToday() {
 }
 
 function showBoard(withEntry) {
+  tickNext();
   notifyDinotreeDock();
   const already = withEntry && alreadySubmittedToday();
   document.getElementById('board-entry').style.display = (withEntry && !already) ? 'flex' : 'none';
@@ -770,13 +773,15 @@ function recordResult(won) {
 }
 
 // ── NEXT-DINO COUNTDOWN (to midnight Central) ────────────────
-let nextTimer = null;
 function tickNext() {
-  const el = document.getElementById('v-next');
-  if (todayStr() !== S.day) { el.textContent = 'A new dino is ready - reload to play!'; clearInterval(nextTimer); return; }
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date());
-  const g = t => +p.find(x => x.type === t).value, s = 86400 - (g('hour') * 3600 + g('minute') * 60 + g('second')), z = n => String(n).padStart(2, '0');
-  el.textContent = 'Next dino in ' + z(s / 3600 | 0) + ':' + z(s % 3600 / 60 | 0) + ':' + z(s % 60);
+  if (document.hidden) return;
+  let txt = 'A new dino is ready - reload to play!';
+  if (todayStr() === S.day) {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date());
+    const g = t => +p.find(x => x.type === t).value, s = 86400 - (g('hour') * 3600 + g('minute') * 60 + g('second')), z = n => String(n).padStart(2, '0');
+    txt = 'Next daily dino in ' + z(s / 3600 | 0) + ':' + z(s % 3600 / 60 | 0) + ':' + z(s % 60);
+  }
+  document.querySelectorAll('.next-dino').forEach(el => { el.textContent = txt; });
 }
 
 // ── PRACTICE MODE: random dino, nothing saved, no streak/leaderboard ──
@@ -785,7 +790,7 @@ function startPractice() {
   S.target = pool[Math.random() * pool.length | 0];
   Object.assign(S, { guesses: [], revealed: 0, hints: 0, won: false, over: false, hintNodes: new Set(), practice: true });
   drawnNodes = null; prevPositions = null; prevVW = prevVH = null;
-  clearInterval(nextTimer); clearTimeout(giveUpTimer); giveUpTimer = null;
+  clearTimeout(giveUpTimer); giveUpTimer = null;
   ['overlay', 'clade-overlay', 'board-overlay'].forEach(id => document.getElementById(id).classList.remove('show'));
   setMsg(''); renderTree(); updateStatus();
   document.getElementById('tree-wrap').scrollTop = 0;
@@ -826,6 +831,7 @@ function init() {
   S.target = pickTarget(today); S.dailyName = S.target.name; S.day = today;
   // Unfinished daily -> resume it. Finished daily -> open straight into practice (no stale victory screen).
   if (restoreProgress() === 'done') startPractice(); else { renderTree(); updateStatus(); }
+  tickNext(); setInterval(tickNext, 1000);
   const inputEl = document.getElementById('guess-input');
   if (window.matchMedia('(pointer: coarse)').matches) inputEl.placeholder = 'Enter a dinosaur...'; // shorter on mobile so it doesn't get clipped by the narrower search bar
 
@@ -1620,7 +1626,7 @@ function showVictory() {
   artWrap.style.display = 'none';
   artEl.onload = () => { artWrap.style.display = 'block'; };
   artEl.onerror = () => { artWrap.style.display = 'none'; artEl.src = ''; };
-  artEl.src = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(S.target.name) + '_TD.png?width=800'; // thumbnail, not the full original
+  artEl.src = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(S.target.name) + '_TD.png';
 
   const linkEl = document.getElementById('v-link');
   if (TOTALDINO_PAGES.has(S.target.name)) {
@@ -1634,8 +1640,7 @@ function showVictory() {
   const st = loadStats(), pr = S.practice;
   document.getElementById('v-streak').textContent = pr ? '' : (S.won ? '🔥 Streak: ' + st.streak + (st.streak === 1 ? ' day' : ' days') : 'Streak reset') + (st.best ? ' · Best: ' + st.best : '');
   document.getElementById('v-share-row').style.display = (S.won && !pr) ? 'flex' : 'none';
-  clearInterval(nextTimer);
-  if (pr) document.getElementById('v-next').textContent = ''; else { tickNext(); nextTimer = setInterval(tickNext, 1000); }
+  tickNext();
   document.getElementById('overlay').classList.add('show');
   if (S.won && !S.practice) getDb().catch(() => {}); // warm up Firebase so ADD SCORE is instant
   // All three buttons now sit in one row and size to their own natural
