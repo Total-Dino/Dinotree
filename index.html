@@ -133,7 +133,7 @@ svg{display:block;margin:0 auto}
 .board-rank{color:#006600;display:inline-block;width:20px}
 .board-initials{color:#00ff00;font-weight:bold;letter-spacing:1px;cursor:pointer;text-decoration:underline dotted #006600;text-underline-offset:3px}
 .board-initials:hover{text-decoration-color:#00ff00}
-.board-detail{display:none;font-size:12px;color:#00aa00;padding:0 0 5px 22px}
+.board-detail{display:none;font-size:12px;line-height:1.3;color:#ffd633;margin:-7px 0 12px;padding-left:22px}
 .board-detail.show{display:block}
 .edge{fill:none;stroke:#003800;stroke-width:3}.edge.epath{stroke:#009900}
 .sn{fill:#080808;stroke:#006600;stroke-width:2}.pn{fill:#001a00;stroke:#00cc00;stroke-width:2.5}.bn{fill:#050505;stroke:#006600;stroke-width:1}
@@ -506,12 +506,14 @@ function getDb() {
 // the obvious cases off a board anyone can see. Matched as a substring
 // anywhere in the name (case-insensitive), not just an exact match, since
 // names can now be up to 10 characters rather than exactly 3.
-// Short fragments must match the WHOLE name (so Knight, Titan, Class, Nigel pass); longer, rarely-innocent ones match anywhere.
-const BLOCK_EXACT = new Set(['ASS','FAG','FUK','FUC','CUM','SEX','GAY','NIG','KKK','RAP','TIT','DIK','COK','SHT','PIS','CNT']);
-const BLOCK_SUBSTR = ['FUCK','SHIT','CUNT','NIGG','FAGG','BITCH','PUSSY','SLUT','WHORE'];
-function isBlockedInitials(s) {
-  const up = s.toUpperCase();
-  return BLOCK_EXACT.has(up.replace(/[^A-Z]/g, '')) || BLOCK_SUBSTR.some(b => up.includes(b));
+// Names are checked word by word (spaces/punctuation split words), so "Tony ass" is caught while Bass, Class, Knight, Nigel pass.
+// BLOCK_WORDS must match a whole word; BLOCK_SUBSTR (longer, rarely innocent) matches inside any word. Edit these lists freely.
+const BLOCK_WORDS = new Set(['ASS','FAG','FUK','FUC','CUM','SEX','GAY','NIG','KKK','RAP','TIT','DIK','COK','SHT','PIS','CNT','ARSE','TITS','DICK','COCK','PENIS','VAGINA','ANUS','PORN','RAPE','NAZI']);
+const BLOCK_SUBSTR = ['FUCK','SHIT','CUNT','NIGG','FAGG','BITCH','PUSSY','SLUT','WHORE','ASSHOLE'];
+const LEET = { '@': 'A', '4': 'A', '$': 'S', '5': 'S', '0': 'O', '1': 'I', '!': 'I', '3': 'E' }; // a$$ -> ass
+function isBlockedInitials(name) {
+  const words = name.toUpperCase().replace(/[@4$50!13]/g, c => LEET[c]).split(/[^A-Z]+/).filter(Boolean);
+  return words.some(w => BLOCK_WORDS.has(w) || BLOCK_SUBSTR.some(b => w.includes(b))) || BLOCK_WORDS.has(words.join('')); // last check catches "A S S"
 }
 
 function alreadySubmittedToday() {
@@ -631,7 +633,10 @@ async function loadHighScores() {
     }).join('');
     listEl.onclick = e => { // tap a name to show / hide that player's streak
       const n = e.target.closest('.board-initials'), d = n && n.parentNode.nextElementSibling;
-      if (d && d.classList.contains('board-detail')) d.classList.toggle('show');
+      if (!d || !d.classList.contains('board-detail')) return;
+      const wasOpen = d.classList.contains('show');
+      listEl.querySelectorAll('.board-detail.show').forEach(x => x.classList.remove('show')); // close whichever was open
+      if (!wasOpen) d.classList.add('show');
     };
   } catch (err) {
     listEl.textContent = 'Could not load the high scores.';
