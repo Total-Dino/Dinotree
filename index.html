@@ -31,7 +31,9 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
 #topbar{position:absolute;top:0;left:0;right:0;z-index:25;background:#000;padding:10px 14px 0;display:flex;flex-direction:column;gap:0px}
 #input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0}
 #input-field-wrap{position:relative;flex:1;min-width:0}
-#btn-row{display:flex;gap:6px;flex-shrink:0}
+#btn-row{display:flex;gap:6px;flex-shrink:0;position:relative}
+#give-up-warn{display:none;position:absolute;top:100%;margin-top:3px;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-weight:bold;color:#ff3333;text-shadow:0 0 4px #000,0 0 4px #000;pointer-events:none;z-index:30}
+#give-up-warn.show{display:block}
 #guess-input{width:100%;min-width:0;background:#000;color:#00ff00;border:1px solid #00aa00;padding:8px 10px;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:20px;outline:none;height:100%;box-sizing:border-box}
 #guess-input:focus{border-color:#00ff00}
 #guess-input::placeholder{color:#00701a}
@@ -44,7 +46,6 @@ button{background:#000;color:#00ff00;border:1px solid #00aa00;padding:5px 8px;fo
 button:hover{background:#001a00;border-color:#00ff00}
 #btn-row button{padding:0 18px;font-size:14px;letter-spacing:.8px}
 #give-up-btn::after{content:'PRACTICE';display:block;height:0;overflow:hidden;visibility:hidden}
-#status{font-size:11px;color:#00aa00;flex-shrink:0;display:flex;gap:14px;padding-left:2px;order:4}
 #message{font-size:14px;color:#cc3333;flex-shrink:0;min-height:2px;padding-left:2px;order:5}
 /* Exactly one scroll region: #tree-wrap. Everything else is fixed-height chrome.
    The SVG is rendered at true 1:1 scale (see renderTree) — never CSS-stretched
@@ -153,10 +154,8 @@ svg{display:block;margin:0 auto}
         <button onclick="giveHint()">HINT</button>
         <button id="give-up-btn" onclick="giveUp()">GIVE UP</button>
         <button onclick="showBoard(false)">HIGH SCORES</button>
+        <span id="give-up-warn">you'll lose your streak</span>
       </div>
-    </div>
-    <div id="status">
-      <span id="s-mode" style="color:#00cc00;letter-spacing:1px"></span><span id="s-hints"></span>
     </div>
     <div id="message"></div>
   </div>
@@ -178,7 +177,7 @@ svg{display:block;margin:0 auto}
       <a class="share-btn board-btn" id="v-board-link" href="#" onclick="showBoard(true); return false;">add to high scores</a>
     </div>
     <div style="margin-top:8px"><a class="share-btn" id="v-again" href="#" onclick="startPractice(); return false;">practice: play another dino</a></div>
-    <div class="vsub next-dino" style="margin:12px 0 4px"></div>
+    <div class="vsub next-dino" style="margin:12px 0 -4px;color:#ff3333;font-weight:bold"></div>
   </div>
 </div>
 <div id="clade-overlay">
@@ -200,7 +199,7 @@ svg{display:block;margin:0 auto}
     <div id="board-success" style="display:none;color:#00cc00;font-size:13px;margin-bottom:12px">Score added! Come back tomorrow for a new dino.</div>
     <div id="board-error" style="display:none;color:#cc3333;font-size:12px;margin-bottom:12px"></div>
     <div id="board-list"></div>
-    <div class="next-dino" style="text-align:center;font-size:12px;color:#00aa00;margin-top:14px"></div>
+    <div class="next-dino" style="text-align:center;font-size:12px;color:#ff3333;font-weight:bold;margin:14px 0 -10px"></div>
   </div>
 </div>
 
@@ -790,7 +789,7 @@ function startPractice() {
   S.target = pool[Math.random() * pool.length | 0];
   Object.assign(S, { guesses: [], revealed: 0, hints: 0, won: false, over: false, hintNodes: new Set(), practice: true });
   drawnNodes = null; prevPositions = null; prevVW = prevVH = null;
-  clearTimeout(giveUpTimer); giveUpTimer = null;
+  clearTimeout(giveUpTimer); giveUpTimer = null; giveUpWarn(false);
   ['overlay', 'clade-overlay', 'board-overlay'].forEach(id => document.getElementById(id).classList.remove('show'));
   setMsg(''); renderTree(); updateStatus();
   document.getElementById('tree-wrap').scrollTop = 0;
@@ -963,11 +962,15 @@ function giveHint() {
 }
 
 let giveUpTimer = null;
+function giveUpWarn(on) { // "you'll lose your streak" - daily game only, centred under the button
+  const w = document.getElementById('give-up-warn'), b = document.getElementById('give-up-btn');
+  if (on && !S.practice) { w.style.left = (b.offsetLeft + b.offsetWidth / 2) + 'px'; w.classList.add('show'); } else w.classList.remove('show');
+}
 function giveUp() {
   if (S.won || S.over) { startPractice(); return; } // after finishing, this button becomes PRACTICE
   const btn = document.getElementById('give-up-btn');
-  if (!giveUpTimer) { btn.textContent = 'SURE?'; giveUpTimer = setTimeout(() => { giveUpTimer = null; btn.textContent = 'GIVE UP'; }, 3000); return; }
-  clearTimeout(giveUpTimer); giveUpTimer = null; btn.textContent = 'GIVE UP';
+  if (!giveUpTimer) { btn.textContent = 'SURE?'; giveUpWarn(true); giveUpTimer = setTimeout(() => { giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false); }, 3000); return; }
+  clearTimeout(giveUpTimer); giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false);
   S.over = true; S.revealed = S.target.lineage.length - 1; saveProgress(); recordResult(false);
   renderTree(); updateStatus(); setMsg('The answer was: ' + S.target.name);
   setTimeout(showVictory, 500);
@@ -976,8 +979,6 @@ function giveUp() {
 function setMsg(t) { document.getElementById('message').textContent = t; }
 
 function updateStatus() {
-  document.getElementById('s-hints').textContent = S.hints > 0 ? S.hints + ' hint' + (S.hints>1?'s':'') : '';
-  document.getElementById('s-mode').textContent = S.practice ? 'PRACTICE' : '';
   const gb = document.getElementById('give-up-btn');
   if (S.won || S.over) gb.textContent = 'PRACTICE'; else if (!giveUpTimer) gb.textContent = 'GIVE UP';
 }
