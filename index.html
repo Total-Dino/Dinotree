@@ -131,7 +131,10 @@ svg{display:block;margin:0 auto}
 #board-entry button{white-space:nowrap}
 #board-list{font-size:13px;color:#00cc00;line-height:1.9;min-height:20px}
 .board-rank{color:#006600;display:inline-block;width:20px}
-.board-initials{color:#00ff00;font-weight:bold;letter-spacing:1px}
+.board-initials{color:#00ff00;font-weight:bold;letter-spacing:1px;cursor:pointer;text-decoration:underline dotted #006600;text-underline-offset:3px}
+.board-initials:hover{text-decoration-color:#00ff00}
+.board-detail{display:none;font-size:12px;color:#00aa00;padding:0 0 5px 22px}
+.board-detail.show{display:block}
 .edge{fill:none;stroke:#003800;stroke-width:3}.edge.epath{stroke:#009900}
 .sn{fill:#080808;stroke:#006600;stroke-width:2}.pn{fill:#001a00;stroke:#00cc00;stroke-width:2.5}.bn{fill:#050505;stroke:#006600;stroke-width:1}
 .tn{fill:#001400;stroke:#00ff00;stroke-width:1}.wn{fill:#00ff00;stroke:#00ff00;stroke-width:2}.ln{fill:#1a0000;stroke:#aa2200;stroke-width:1.5}
@@ -566,13 +569,14 @@ async function submitScore() {
   btn.disabled = true;
   el.disabled = true;
   try {
-    const db = await getDb();
+    const db = await getDb(), st = loadStats();
     await db.collection('scores').add({
       date: todayStr(),
       initials: initials,
       guesses: guessCount(),
       hints: S.hints,
       score: guessCount() + S.hints,
+      streak: st.streak,
       ts: firebase.firestore.FieldValue.serverTimestamp()
     });
     markSubmittedToday();
@@ -618,11 +622,17 @@ async function loadHighScores() {
   try {
     const rows = (await fetchTodayScores()).sort((a, b) => (scoreOf(a) - scoreOf(b)) || ((a.hints | 0) - (b.hints | 0)));
     if (rows.length === 0) { listEl.textContent = 'Nobody yet today - Be the first!'; return; }
-    listEl.innerHTML = rows.slice(0, 10).map((r, i) =>
-      '<div class="board-row"><span class="board-rank">' + (i+1) + '.</span> ' +
-      '<span class="board-initials">' + escHtml(String(r.initials).slice(0, 10)) + '</span> - ' +
-      formatGuessHintPhrase(Number(r.guesses) | 0, Number(r.hints) | 0) + '</div>'
-    ).join('');
+    listEl.innerHTML = rows.slice(0, 10).map((r, i) => {
+      const sk = Number(r.streak) | 0; // older entries don't have one
+      const detail = sk > 0 ? 'Current streak: ' + sk + (sk === 1 ? ' day' : ' days') : 'No streak recorded';
+      return '<div class="board-row"><span class="board-rank">' + (i+1) + '.</span> ' +
+        '<span class="board-initials" title="Tap to see their streak">' + escHtml(String(r.initials).slice(0, 10)) + '</span> - ' +
+        formatGuessHintPhrase(Number(r.guesses) | 0, Number(r.hints) | 0) + '</div><div class="board-detail">' + detail + '</div>';
+    }).join('');
+    listEl.onclick = e => { // tap a name to show / hide that player's streak
+      const n = e.target.closest('.board-initials'), d = n && n.parentNode.nextElementSibling;
+      if (d && d.classList.contains('board-detail')) d.classList.toggle('show');
+    };
   } catch (err) {
     listEl.textContent = 'Could not load the high scores.';
     console.error('High scores load failed:', err);
@@ -1205,7 +1215,8 @@ function renderTree() {
   const BSCALE_MID   = 0.55;
   const BSCALE_FLOOR = 0.22;
 
-  function nwAt(lbl, scale) { return Math.max(70, lbl.length * 9.5 + 26) * scale; }
+  // t = box tightness (0..1): trims box padding and minimum width (and, in the fit below, box height) WITHOUT touching the font size.
+  function nwAt(lbl, scale, t) { t = t || 0; return Math.max(70 - 22 * t, lbl.length * 9.5 + 26 - 14 * t) * scale; }
   function labelOf(n) { return (n.isTarget && (S.won || S.over)) ? S.target.name : n.name; }
 
   function paramsFromS(s) {
@@ -1226,48 +1237,60 @@ function renderTree() {
   //   k = extra uniform shrink of boxes + text (down to MINFONT) - only when squashing alone can't fit the HEIGHT
   // The desktop iframe is height-limited (5:4), so there the tree must fit vertically too;
   // on phones availH is Infinity (they scroll), which leaves k = v = 1 and the old behaviour.
-  const VMIN = 0.6, MINFONT = 8;
+  const VMIN = 0.6, VTIGHT = 0.45, MINFONT = 8, MINLINE = 14; // MINLINE: on desktop, never leave less than 14px of connector line between levels
+  const vFloor = p => VMIN - (VMIN - VTIGHT) * p; // tighter boxes can sit closer together and still leave room for the connector lines
   const hAvail = treeWrapEl.clientHeight - (parseFloat(treeWrapEl.style.paddingTop) || 0) - 8;
   const availH = (isMobile || hAvail < 120) ? Infinity : hAvail;
-  function metricsAt(s, k, v) {
+  function metricsAt(s, k, v, t) {
     const p = paramsFromS(s), bS = p.bScale * k;
-    const r = layoutTree(visRoot, BASE_LH * bS * v, BASE_NH * bS, BASE_SGAP * bS, MAX_CLUSTER_COLS, lbl => nwAt(lbl, bS), labelOf, Math.max(4, BASE_GAP * p.gScale));
+    const nhS = BASE_NH * bS * (1 - 0.3 * t);
+    const r = layoutTree(visRoot, Math.max(BASE_LH * bS * v, isMobile ? 0 : nhS + MINLINE), nhS, BASE_SGAP * bS, MAX_CLUSTER_COLS, lbl => nwAt(lbl, bS, t), labelOf, Math.max(4, BASE_GAP * p.gScale));
     return { w: (r.maxX - r.minX) + GUTTER * 2, h: r.maxY + 20 };
   }
-  function solveS(k) { // smallest compression whose WIDTH fits (2 = best effort)
-    if (metricsAt(0, k, 1).w <= availW) return 0;
-    if (metricsAt(2, k, 1).w > availW) return 2;
+  function solveS(k, t) { // smallest compression whose WIDTH fits (2 = best effort)
+    if (metricsAt(0, k, 1, t).w <= availW) return 0;
+    if (metricsAt(2, k, 1, t).w > availW) return 2;
     let lo = 0, hi = 2;
-    for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (metricsAt(mid, k, 1).w <= availW) hi = mid; else lo = mid; }
+    for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (metricsAt(mid, k, 1, t).w <= availW) hi = mid; else lo = mid; }
     return hi;
   }
-  let s = solveS(1), k = 1, v = 1;
-  if (metricsAt(s, 1, 1).h > availH) {
-    if (metricsAt(s, 1, VMIN).h <= availH) { // squash the levels just enough
-      let lo = VMIN, hi = 1;
-      for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (metricsAt(s, 1, mid).h <= availH) lo = mid; else hi = mid; }
-      v = lo;
-    } else { // fully squashed and still too tall: shrink boxes + text, but never below MINFONT - past that it
-      v = VMIN;   // only makes the text unreadable without making the tree fit, so the rest just scrolls.
-      const fontAt = kk => BASE_FONT * paramsFromS(solveS(kk)).bScale * kk;
-      let kLo = 1; // smallest k that keeps the text legible (narrower boxes free up width, so gaps relax back out)
+  const hAt = (t, v, k) => metricsAt(solveS(k, t), k, v, t).h;
+  // Order of resort on desktop: (1) tighten the boxes, (2) squash the level spacing, (3) shrink gaps, (4) shrink the text.
+  // Phones (availH = Infinity) skip all of this and keep the original width-only behaviour.
+  let t = 0, k = 1, v = 1;
+  if (!isMobile && metricsAt(0, 1, 1, 0).w > availW) {
+    if (metricsAt(0, 1, 1, 1).w > availW) t = 1;
+    else { let lo = 0, hi = 1; for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (metricsAt(0, 1, 1, mid).w <= availW) hi = mid; else lo = mid; } t = hi; }
+  }
+  let s = solveS(1, t);
+  if (metricsAt(s, 1, 1, t).h > availH) {
+    if (hAt(1, vFloor(1), 1) <= availH) {
+      if (hAt(t, vFloor(t), 1) > availH) { let lo = t, hi = 1; for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (hAt(mid, vFloor(mid), 1) <= availH) hi = mid; else lo = mid; } t = hi; s = solveS(1, t); }
+      let a = vFloor(t), b = 1; // least squash that fits
+      for (let i = 0; i < 8; i++) { const mid = (a + b) / 2; if (metricsAt(s, 1, mid, t).h <= availH) a = mid; else b = mid; }
+      v = a;
+    } else { // fully tightened and squashed, still too tall: shrink the text, but never below MINFONT
+      t = 1; v = VTIGHT;
+      const fontAt = kk => BASE_FONT * paramsFromS(solveS(kk, 1)).bScale * kk;
+      let kLo = 1;
       if (fontAt(1) > MINFONT) { let a = 0.2, b = 1; for (let i = 0; i < 8; i++) { const mid = (a + b) / 2; if (fontAt(mid) >= MINFONT) b = mid; else a = mid; } kLo = b; }
-      if (kLo < 1 && metricsAt(solveS(kLo), kLo, VMIN).h <= availH) {
+      if (kLo < 1 && hAt(1, VTIGHT, kLo) <= availH) {
         let lo = kLo, hi = 1;
-        for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (metricsAt(solveS(mid), mid, VMIN).h <= availH) lo = mid; else hi = mid; }
-        k = lo; s = solveS(k);
+        for (let i = 0; i < 8; i++) { const mid = (lo + hi) / 2; if (hAt(1, VTIGHT, mid) <= availH) lo = mid; else hi = mid; }
+        k = lo;
       }
+      s = solveS(k, 1);
     }
   }
 
   const { gScale, bScale: bs } = paramsFromS(s);
   const bScale = bs * k;
-  const NH   = BASE_NH * bScale;
-  const LH   = BASE_LH * bScale * v;
+  const NH   = BASE_NH * bScale * (1 - 0.3 * t);
+  const LH   = Math.max(BASE_LH * bScale * v, isMobile ? 0 : NH + MINLINE);
   const SGAP = BASE_SGAP * bScale;
   const FONT = BASE_FONT * bScale;
   const GAP  = Math.max(4, BASE_GAP * gScale);
-  function nw(lbl) { return nwAt(lbl, bScale); }
+  function nw(lbl) { return nwAt(lbl, bScale, t); }
 
   // Final real layout pass at the chosen scale — this is what actually
   // resolves every node's position for rendering.
