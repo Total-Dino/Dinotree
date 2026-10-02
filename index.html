@@ -1632,39 +1632,31 @@ function fitVictoryLink() {
 }
 
 // ── VICTORY ART: small thumbnail instead of the multi-MB original ──────────────
-// Wikimedia's thumbnailer sometimes flattens PNG transparency onto opaque white (Phabricator T198370), which is what
-// put white boxes around the art before. So: ask the Commons API for the 800px thumbnail, check its corners, and if it
-// came back white-backed, key the background out here (flood fill from the border, so white INSIDE the dinosaur stays).
-// Anything unexpected (offline, no CORS, missing file) falls back to the full-size original, exactly as before.
+// Wikimedia's thumbnailer sometimes flattens PNG transparency onto opaque white (Phabricator T198370), which put white
+// boxes around the art. So: ask the Commons API for the 800px thumbnail and check its corners. If it kept its transparency,
+// use it; if it came back white-backed (or anything else goes wrong), use the full-size original, which is always clean.
+// Either way it's fetched early (after the first guess) so it's usually ready by the victory screen.
 const ART_W = 800, artCache = {};
+// No list of problem dinos: every game re-checks, so if Wikimedia fixes a thumbnail it starts being used automatically.
 const artOriginal = name => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(name + '_TD.png');
 function loadImg(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; }); }
-function dewhite(d, w, h) { // d = RGBA bytes. Removes white connected to the border, then feathers the 1px anti-aliased fringe.
-  const bg = i => d[i + 3] > 245 && d[i] > 247 && d[i + 1] > 247 && d[i + 2] > 247;
-  const seen = new Uint8Array(w * h), st = [];
-  const push = p => { if (!seen[p] && bg(p * 4)) { seen[p] = 1; st.push(p); } };
-  for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
-  for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
-  while (st.length) { const p = st.pop(), x = p % w; d[p * 4 + 3] = 0; if (x > 0) push(p - 1); if (x < w - 1) push(p + 1); if (p >= w) push(p - w); if (p < w * (h - 1)) push(p + w); }
-  for (let p = 0; p < w * h; p++) {
-    if (seen[p]) continue; const x = p % w;
-    if (!((x > 0 && seen[p - 1]) || (x < w - 1 && seen[p + 1]) || (p >= w && seen[p - w]) || (p < w * (h - 1) && seen[p + w]))) continue;
-    const m = Math.min(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]);
-    if (m > 170) d[p * 4 + 3] = Math.round(255 * Math.max(0, (255 - m) / 85));
-  }
+function cornersWhite(im) { // true if all four corner pixels are opaque white, i.e. the transparency was flattened
+  const c = document.createElement('canvas'), cx = c.getContext('2d', { willReadFrequently: true }), w = im.naturalWidth, h = im.naturalHeight;
+  c.width = c.height = 1;
+  return [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]].every(([x, y]) => {
+    cx.clearRect(0, 0, 1, 1); cx.drawImage(im, x, y, 1, 1, 0, 0, 1, 1);
+    const d = cx.getImageData(0, 0, 1, 1).data; return d[3] > 245 && d[0] > 247 && d[1] > 247 && d[2] > 247;
+  });
 }
-function prepareArt(name) { // cached promise -> URL to put in the <img>; also called early (after the first guess) so it's ready at the win
+function prepareArt(name) { // cached promise -> URL for the <img>
   return artCache[name] || (artCache[name] = (async () => {
-    let how = 'original (fallback)', out = artOriginal(name);
+    const orig = artOriginal(name); let out = orig, how;
     try {
       const j = await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=' + ART_W + '&titles=File:' + encodeURIComponent(name + '_TD.png'))).json();
-      const info = Object.values(j.query.pages)[0].imageinfo[0], thumb = info.thumburl || info.url, im = await loadImg(thumb);
-      const c = document.createElement('canvas'), w = c.width = im.naturalWidth, h = c.height = im.naturalHeight, cx = c.getContext('2d');
-      cx.drawImage(im, 0, 0); const px = cx.getImageData(0, 0, w, h), d = px.data;
-      const white = p => d[p * 4 + 3] > 245 && d[p * 4] > 247 && d[p * 4 + 1] > 247 && d[p * 4 + 2] > 247;
-      if (![0, w - 1, (h - 1) * w, h * w - 1].every(white)) { out = thumb; how = 'thumbnail'; }  // transparency survived
-      else { dewhite(d, w, h); cx.putImageData(px, 0, 0); out = await new Promise((res, rej) => c.toBlob(b => b ? res(URL.createObjectURL(b)) : rej(), 'image/png')); how = 'thumbnail, white background removed'; }
-    } catch (e) { /* keep the original */ }
+      const info = Object.values(j.query.pages)[0].imageinfo[0], thumb = info.thumburl || info.url;
+      if (cornersWhite(await loadImg(thumb))) how = 'original (thumbnail was white-backed)'; else { out = thumb; how = 'thumbnail'; }
+    } catch (e) { how = 'original (fallback)'; }
+    if (out === orig) new Image().src = orig; // start downloading the full-size art now so it's cached by the victory screen
     console.info('Dinotree art:', how, '-', name);
     return out;
   })());
