@@ -471,6 +471,13 @@ function resolveGuess(raw) { // what Enter submits: exact name, nickname, a uniq
 // ── Popularity counts: when a game ends, add its guesses to today's tally (see stats.html) ──
 // One write per finished game (a single document per day, so it stays cheap). "first" = the opening guess, the best sign of
 // which dinos people already know, since nothing has influenced it yet; "all" = every guess.
+function playerId() { // random anonymous id kept in this browser only (a person on two devices counts twice)
+  try {
+    let id = localStorage.getItem('dinotree_pid');
+    if (!id) { id = Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join(''); localStorage.setItem('dinotree_pid', id); }
+    return id;
+  } catch (e) { return null; }
+}
 function recordGame() {
   if (S.counted) return; S.counted = true;
   const names = S.guesses.map(g => g.name).concat(S.won ? [S.target.name] : []);
@@ -478,7 +485,11 @@ function recordGame() {
   getDb().then(db => {
     const inc = () => firebase.firestore.FieldValue.increment(1), all = {};
     names.forEach(n => { all[n] = inc(); });
-    return db.collection('guessStats').doc(todayStr()).set({ games: inc(), first: { [names[0]]: inc() }, all }, { merge: true });
+    const pid = playerId(); // second tiny write: lets stats.html count how many different people play
+    return Promise.all([
+      db.collection('guessStats').doc(todayStr()).set({ games: inc(), first: { [names[0]]: inc() }, all }, { merge: true }),
+      pid ? db.collection('players').doc(pid).set({ last: todayStr(), games: inc() }, { merge: true }) : null
+    ]);
   }).catch(() => {});
 }
 

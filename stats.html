@@ -10,13 +10,19 @@ button.on{background:#00aa00;color:#000} label{cursor:pointer}
 table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:5px 8px;text-align:right;border-bottom:1px solid #0a2a0a}
 th{color:#00ff00;cursor:pointer;user-select:none} th:nth-child(2),td:nth-child(2){text-align:left} td:nth-child(2){color:#00ff00;font-weight:bold}
 .no{color:#ffd633}
+.wrap{overflow-x:auto}
+th[data-k].sorted::after{content:' \25BE'}
+@media (max-width:600px){
+  body{padding:12px 8px} h1{font-size:19px} table{font-size:13px} th,td{padding:5px 3px}
+  th:first-child,td:first-child{width:22px;padding-left:0} button{padding:5px 9px;font-size:13px}
+}
 </style></head><body>
 <h1>DinoTree: what players guess</h1>
 <div id="summary">Loading...</div>
 <div class="bar"><button data-days="0" class="on">All time</button><button data-days="30">Last 30 days</button>
 <label><input type="checkbox" id="nopage"> only dinos with no page yet</label></div>
-<table><thead><tr><th>#</th><th>Dino</th><th data-k="first" title="Games that opened with this dino">Opened with &#9662;</th><th data-k="share" title="Share of games that opened with it">% of games</th><th data-k="all" title="Every guess">All guesses</th><th>Page</th></tr></thead><tbody id="rows"></tbody></table>
-<p style="color:#006600;font-size:12px">Counts only finished games. "Opened with" is the best sign of which dinos people already know, because nothing has influenced a first guess yet.</p>
+<div class="wrap"><table><thead><tr><th>#</th><th>Dino</th><th data-k="first" title="Games that opened with this dino">Opened</th><th data-k="share" title="Share of games that opened with it">%</th><th data-k="all" title="Every guess">All</th><th>Page</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p style="color:#006600;font-size:12px">Counts only finished games. "Different people" means different browsers (someone on two devices counts twice) and only counts since this feature went live. Opened = games that began with this dino; % = share of games; All = every guess; tap a heading to sort. "Opened" is the best sign of which dinos people already know, because nothing has influenced a first guess yet.</p>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
@@ -28,22 +34,31 @@ const firebaseConfig = {
   messagingSenderId: "457914985041",
   appId: "1:457914985041:web:0b57a0d40238219512a670"
 };
-let days = [], pages = null, sortKey = 'first', range = 0;
+let days = [], pages = null, players = null, sortKey = 'first', range = 0;
 const $ = id => document.getElementById(id);
 function aggregate(list, range, today) { // -> { games, rows:[{n, first, all}] }
   const cutoff = range ? new Date(new Date(today + 'T00:00:00Z').getTime() - range * 864e5).toISOString().slice(0, 10) : '';
-  const m = {}; let games = 0;
-  for (const d of list) { if (d.id < cutoff) continue; games += d.games || 0;
+  const m = {}; let games = 0, n = 0;
+  for (const d of list) { if (d.id < cutoff) continue; n++; games += d.games || 0;
     for (const k of ['first', 'all']) for (const [n, v] of Object.entries(d[k] || {})) (m[n] = m[n] || { n, first: 0, all: 0 })[k] += v; }
-  return { games, rows: Object.values(m) };
+  return { games, n, rows: Object.values(m) };
+}
+function cutoffFor(range, today) { return new Date(new Date(today + 'T00:00:00Z').getTime() - range * 864e5).toISOString().slice(0, 10); }
+async function loadPlayers(today) { // -> { all, recent } = different people ever / in the last 30 days (null if unavailable)
+  const col = firebase.firestore().collection('players'), cut = cutoffFor(30, today);
+  try { // cheap server-side count when the SDK offers it
+    if (typeof col.count === 'function') { const [a, b] = await Promise.all([col.count().get(), col.where('last', '>=', cut).count().get()]); return { all: a.data().count, recent: b.data().count }; }
+  } catch (e) { /* fall through to reading the documents */ }
+  try { const ds = (await col.get()).docs.map(d => d.data()); return { all: ds.length, recent: ds.filter(d => d.last >= cut).length }; } catch (e) { return null; }
 }
 function render() {
-  const { games, rows } = aggregate(days, range, new Date().toISOString().slice(0, 10));
+  const { games, n, rows } = aggregate(days, range, new Date().toISOString().slice(0, 10)), pl = players && (range ? players.recent : players.all);
   rows.forEach(r => { r.share = games ? 100 * r.first / games : 0; });
+  document.querySelectorAll('th[data-k]').forEach(th => th.classList.toggle('sorted', th.dataset.k === sortKey));
   rows.sort((a, b) => b[sortKey] - a[sortKey] || b.all - a.all || a.n.localeCompare(b.n));
   const only = $('nopage').checked && pages, shown = rows.filter(r => !only || (!pages.has(r.n) && r.n !== 'Aves'));
-  $('summary').textContent = games + ' finished games counted' + (days.length ? ' over ' + days.length + ' day' + (days.length > 1 ? 's' : '') : '') + '. Showing the top ' + Math.min(100, shown.length) + '.';
-  $('rows').innerHTML = shown.slice(0, 100).map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + r.n.replace(/[<>&"]/g, '') + (r.n === 'Aves' ? ' (bird guesses)' : '') + '</td><td>' + r.first + '</td><td>' + r.share.toFixed(1) + '%</td><td>' + r.all + '</td><td class="' + (pages && !pages.has(r.n) && r.n !== 'Aves' ? 'no' : '') + '">' + (!pages || r.n === 'Aves' ? '' : pages.has(r.n) ? '&#10003;' : 'none yet') + '</td></tr>').join('');
+  $('summary').textContent = games + ' finished games' + (pl ? ' by ' + pl + ' different ' + (pl === 1 ? 'person' : 'people') : '') + (n ? ' over ' + n + ' day' + (n > 1 ? 's' : '') : '') + '. Showing the top ' + Math.min(100, shown.length) + '.';
+  $('rows').innerHTML = shown.slice(0, 100).map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + r.n.replace(/[<>&"]/g, '') + (r.n === 'Aves' ? ' (bird guesses)' : '') + '</td><td>' + r.first + '</td><td>' + r.share.toFixed(1) + '%</td><td>' + r.all + '</td><td class="' + (pages && !pages.has(r.n) && r.n !== 'Aves' ? 'no' : '') + '">' + (!pages || r.n === 'Aves' ? '' : pages.has(r.n) ? '&#10003;' : 'no') + '</td></tr>').join('');
 }
 async function start() {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -52,6 +67,7 @@ async function start() {
   } catch (e) { pages = null; }
   try { days = (await firebase.firestore().collection('guessStats').get()).docs.map(d => Object.assign({ id: d.id }, d.data())); }
   catch (e) { $('summary').textContent = 'Could not load the counts (have the Firestore rules been updated?).'; return; }
+  players = await loadPlayers(new Date().toISOString().slice(0, 10));
   render();
 }
 document.querySelectorAll('button[data-days]').forEach(b => b.onclick = () => { range = +b.dataset.days; document.querySelectorAll('button[data-days]').forEach(x => x.classList.toggle('on', x === b)); render(); });
