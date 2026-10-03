@@ -468,6 +468,20 @@ function resolveGuess(raw) { // what Enter submits: exact name, nickname, a uniq
   return null;
 }
 
+// ── Popularity counts: when a game ends, add its guesses to today's tally (see stats.html) ──
+// One write per finished game (a single document per day, so it stays cheap). "first" = the opening guess, the best sign of
+// which dinos people already know, since nothing has influenced it yet; "all" = every guess.
+function recordGame() {
+  if (S.counted) return; S.counted = true;
+  const names = S.guesses.map(g => g.name).concat(S.won ? [S.target.name] : []);
+  if (!names.length) return;
+  getDb().then(db => {
+    const inc = () => firebase.firestore.FieldValue.increment(1), all = {};
+    names.forEach(n => { all[n] = inc(); });
+    return db.collection('guessStats').doc(todayStr()).set({ games: inc(), first: { [names[0]]: inc() }, all }, { merge: true });
+  }).catch(() => {});
+}
+
 // ── Not-found guesses: counted anonymously so you can see which dinos players try that the game lacks ──
 const missedSeen = new Set();
 function logMissed(raw) {
@@ -868,7 +882,7 @@ function tickNext() {
 function startPractice() {
   const pool = targetPool().filter(t => t.name !== S.target.name && t.name !== S.dailyName);
   S.target = pool[Math.random() * pool.length | 0];
-  Object.assign(S, { guesses: [], revealed: 0, hints: 0, won: false, over: false, hintNodes: new Set(), practice: true, artWarm: false });
+  Object.assign(S, { guesses: [], revealed: 0, hints: 0, won: false, over: false, hintNodes: new Set(), practice: true, artWarm: false, counted: false });
   drawnNodes = null; prevPositions = null; prevVW = prevVH = null;
   clearTimeout(giveUpTimer); giveUpTimer = null; giveUpWarn(false);
   ['overlay', 'clade-overlay', 'board-overlay'].forEach(id => document.getElementById(id).classList.remove('show'));
@@ -1002,7 +1016,7 @@ function submitGuess() {
   setMsg('');
   if (taxon.name === S.target.name) {
     S.won = true; S.revealed = S.target.lineage.length - 1;
-    saveProgress(); recordResult(true); renderTree(); updateStatus(); setTimeout(showVictory, 500); return;
+    saveProgress(); recordResult(true); recordGame(); renderTree(); updateStatus(); setTimeout(showVictory, 500); return;
   }
   const lca = findLCA(taxon.lineage, S.target.lineage);
   if (lca > S.revealed) S.revealed = lca;
@@ -1033,7 +1047,7 @@ function giveUp() {
   const btn = document.getElementById('give-up-btn');
   if (!giveUpTimer) { btn.textContent = 'SURE?'; giveUpWarn(true); giveUpTimer = setTimeout(() => { giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false); }, 3000); return; }
   clearTimeout(giveUpTimer); giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false);
-  S.over = true; S.revealed = S.target.lineage.length - 1; saveProgress(); recordResult(false);
+  S.over = true; S.revealed = S.target.lineage.length - 1; saveProgress(); recordResult(false); recordGame();
   renderTree(); updateStatus(); setMsg('The answer was: ' + S.target.name);
   setTimeout(showVictory, 500);
 }
