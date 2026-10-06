@@ -1,0 +1,27 @@
+name: Sync page list
+on:
+  schedule:
+    - cron: '15 6 * * *'   # every night, just after midnight Central
+  workflow_dispatch:       # lets you run it by hand from the Actions tab
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read the sitemap and update the page list
+        run: node scripts/sync-pages.mjs
+      - name: Save the change, if there was one
+        run: |
+          if git diff --quiet index.html; then
+            echo "No changes."
+          else
+            git config user.name "dinotree-bot"
+            git config user.email "dinotree-bot@users.noreply.github.com"
+            git commit -am "Update page list from sitemap"
+            git push
+          fi
