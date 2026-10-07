@@ -1,6 +1,6 @@
-// Keeps DinoTree's "dinos that have a page" list (TOTALDINO_PAGES in index.html) in step with your totaldino.com sitemap.
-// It only ever ADDS names, never removes any, and never touches the answer list (TARGET_POOL), which stays hand-picked.
-// Run by the GitHub workflow every night, or by hand from the repo's Actions tab.
+// keeps the "dinos with a page" list (TOTALDINO_PAGES in index.html) in step with the totaldino.com sitemap.
+// only adds names, never removes any, never touches the answer list (TARGET_POOL).
+// runs nightly from the GitHub workflow, or by hand from the Actions tab.
 import fs from 'node:fs';
 
 const SITEMAP = process.env.SITEMAP_URL || 'https://www.totaldino.com/sitemap.xml';
@@ -19,7 +19,7 @@ const pages = JSON.parse(html.match(pagesRe)[1]);
 const genera = Object.keys(JSON.parse(html.match(/const GENUS_PARENT = (\{.*?\});\n/s)[1]));
 const byLower = new Map(genera.map(g => [g.toLowerCase(), g]));
 
-// 1. every URL in the sitemap (following a sitemap index into its child sitemaps)
+// 1. every url in the sitemap (follows a sitemap index into its child sitemaps)
 let root;
 try { root = await get(SITEMAP); } catch (e) { console.error('Could not read the sitemap, so nothing was changed:', e.message); process.exit(1); }
 let urls = [];
@@ -29,7 +29,7 @@ if (/<sitemapindex/i.test(root)) {
 urls = [...new Set(urls)];
 if (!urls.length) { console.error('No URLs found in the sitemap, so nothing was changed.'); process.exit(1); }
 
-// 2. a URL counts as a dinosaur page when its last path piece is exactly a genus in the game's family tree
+// 2. a url is a dino page if its last path piece is exactly a genus in the family tree
 const pathOf = u => { try { return new URL(u).pathname.split('/').filter(Boolean).map(x => decodeURIComponent(x).toLowerCase()); } catch { return []; } };
 const slugOf = u => pathOf(u).slice(-1)[0] || '';
 const dirOf = u => '/' + pathOf(u).slice(0, -1).join('/');
@@ -39,9 +39,9 @@ for (const u of urls) {
   if (byLower.has(slug)) { exact.add(byLower.get(slug)); dirVotes[dirOf(u)] = (dirVotes[dirOf(u)] || 0) + 1; continue; }
   for (const tok of slug.split('-')) if (tok.length > 3 && byLower.has(tok)) possible.set(u, byLower.get(tok)); // reported only, never added
 }
-// Wix won't allow page addresses of 4 letters or fewer, so dinos like Zuul or Tawa need a longer address (e.g. /zuul-something).
-// For those short names, accept a page that sits in the same folder as the other dinosaur pages and has the name as one
-// hyphen-separated word of its address. (Pages elsewhere, such as blog posts, are ignored.)
+// Wix doesn't allow page addresses of 4 letters or fewer, so Zuul, Tawa etc. need a longer one (/zuul-something).
+// for those short names, accept a page in the same folder as the other dino pages with the name as one hyphen-separated word.
+// pages elsewhere (blog posts etc.) are ignored.
 const shortFound = new Map();
 const dinoDir = Object.entries(dirVotes).sort((x, y) => y[1] - x[1])[0]?.[0];
 if (dinoDir !== undefined) for (const u of urls) {
