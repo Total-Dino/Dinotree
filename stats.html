@@ -44,9 +44,9 @@ function aggregate(list, range, today) { // -> { games, rows:[{n, first, all}] }
   return { games, n, rows: Object.values(m) };
 }
 function cutoffFor(range, today) { return new Date(new Date(today + 'T00:00:00Z').getTime() - range * 864e5).toISOString().slice(0, 10); }
-async function loadPlayers(today) { // -> { all, recent } = different people ever / in the last 30 days (null if unavailable)
+async function loadPlayers(today) { // -> { all, recent }: people ever / last 30 days (null if unavailable)
   const col = firebase.firestore().collection('players'), cut = cutoffFor(30, today);
-  try { // cheap server-side count when the SDK offers it
+  try { // cheap server-side count if the SDK has it
     if (typeof col.count === 'function') { const [a, b] = await Promise.all([col.count().get(), col.where('last', '>=', cut).count().get()]); return { all: a.data().count, recent: b.data().count }; }
   } catch (e) { /* fall through to reading the documents */ }
   try { const ds = (await col.get()).docs.map(d => d.data()); return { all: ds.length, recent: ds.filter(d => d.last >= cut).length }; } catch (e) { return null; }
@@ -62,7 +62,7 @@ function render() {
 }
 async function start() {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  try { // which dinos already have a page: read straight from the game file next to this one
+  try { // which dinos have a page: read the game file next to this one
     const t = await (await fetch('index.html')).text(); pages = new Set(JSON.parse(t.match(/const TOTALDINO_PAGES = new Set\((\[.*?\])\)/s)[1]));
   } catch (e) { pages = null; }
   try { days = (await firebase.firestore().collection('guessStats').get()).docs.map(d => Object.assign({ id: d.id }, d.data())); }

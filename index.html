@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dinotree</title>
-<!-- These only apply if this raw file's own URL is ever shared directly -
-     when shared as totaldino.com/dinotree (a Wix page embedding this via
-     "Embed a Site"), Facebook/X read that Wix page's own head instead, so
-     the social share image lives in Wix's page SEO settings, not here. -->
+<!-- only used if this file's own url is shared directly. shared as totaldino.com/dinotree, Facebook/X read the Wix page's head instead, so the share image is set in Wix's page SEO settings. -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://totaldino.com/dinotree">
 <meta property="og:title" content="Dinotree - Daily Dinosaur Guessing Game">
@@ -23,11 +20,7 @@ html,body{height:100%;background:#000;color:#00ff00;font-family:Calibri,"Segoe U
 #header h1{font-size:20px;letter-spacing:3px;color:#00ff00}
 #header p{font-size:10px;opacity:.5;letter-spacing:1px;margin-top:1px}
 #header a{color:#00aa00;text-decoration:none}
-/* #topbar floats over #tree-wrap so the tree can occupy the full app
-   height and visually scroll up behind the search bar / hint / give-up
-   buttons instead of being confined to the space left over below them.
-   #tree-wrap gets its padding-top set in JS (positionTreeWrap) to match
-   #topbar's real rendered height. */
+/* #topbar floats over #tree-wrap so the tree can use the full height and scroll up behind the buttons. #tree-wrap's padding-top is set in JS (positionTreeWrap) to the topbar's real height. */
 #topbar{position:absolute;top:0;left:0;right:0;z-index:25;background:#000;padding:10px 14px 0;display:flex;flex-direction:column;gap:0px}
 #input-row{display:flex;flex-direction:row;align-items:stretch;gap:6px;flex-shrink:0}
 #input-field-wrap{position:relative;flex:1;min-width:0}
@@ -47,25 +40,18 @@ button:hover{background:#001a00;border-color:#00ff00}
 #btn-row button{padding:0 18px;font-size:14px;letter-spacing:.8px}
 #give-up-btn::after{content:'PRACTICE';display:block;height:0;overflow:hidden;visibility:hidden}
 #message{font-size:14px;color:#cc3333;flex-shrink:0;min-height:2px;padding-left:2px;order:5}
-/* Exactly one scroll region: #tree-wrap. Everything else is fixed-height chrome.
-   The SVG is rendered at true 1:1 scale (see renderTree) — never CSS-stretched
-   to fit the container, so node boxes/text stay a constant physical size no
-   matter how many guesses have piled up. Only the layout's own spacing
-   (line length) compresses; if it still doesn't fit, this scrolls instead
-   of shrinking anything. */
+/* one scroll region: #tree-wrap. the svg is drawn 1:1 and never css-stretched, so box text keeps its size. renderTree shrinks spacing to fit (and text, down to a minimum, on desktop) and whatever still doesn't fit scrolls. */
 #tree-wrap{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 14px 8px}
 svg{display:block;margin:0 auto}
 #tree-svg rect, #tree-svg text{cursor:pointer}
 @media(pointer:fine){
-  /* Search bar looks awkwardly long stretched across a wide monitor */
+  /* search bar looks too long stretched across a wide monitor */
   #input-row{max-width:700px;margin:0 auto;width:100%}
   #message{max-width:700px;margin:0 auto;width:100%;padding-left:0}
 }
 @media(pointer:coarse){
   #guess-input{padding:9px 10px;font-size:18px}
-  /* Two-row layout: full-width search bar, buttons on their own row
-     beneath it — the input was getting squeezed by three buttons sharing
-     one row. Buttons share the row's width equally so nothing looks cramped. */
+  /* two rows: search bar full width, buttons below. three buttons on one row squeezed the input. */
   #input-row{flex-wrap:wrap}
   #input-field-wrap{flex:1 1 100%}
   #btn-row{flex:1 1 100%;margin-top:6px}
@@ -76,11 +62,7 @@ svg{display:block;margin:0 auto}
 }
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);justify-content:center;align-items:center;z-index:50}
 #overlay.show{display:flex}
-/* Shared shell for every pop-up box (victory, clade info, high scores):
-   border/background/relative-positioning plus its top-right close X live
-   here so all three stay visually consistent as more get added. Each
-   box's own #id rule below only sets what's specific to it (padding,
-   max-width, text alignment). */
+/* shared look for every pop-up (victory, clade info, high scores): border, background and the close X. each #id rule only adds what's specific to it. */
 .popup-box{position:relative;border:1px solid #00ff00;background:#000;box-sizing:border-box}
 .popup-close{position:absolute;top:8px;right:10px;font-size:20px;line-height:1;color:#00aa00;cursor:pointer;padding:4px}
 .popup-close:hover{color:#00ff00}
@@ -94,22 +76,14 @@ svg{display:block;margin:0 auto}
 @media(max-width:480px){
   #vbox a.vlink{font-size:14px;padding:7px 20px}
 }
-/* All three victory actions (x, facebook, high scores) sit in one row now
-   instead of stacking — #v-share-pair uses display:contents so its two
-   children become direct flex items of #v-share-row, sitting alongside
-   the high-scores link with no extra nesting box. flex-wrap is a safety
-   net for very narrow screens rather than the default layout. */
-/* Negative side margins let this row bleed into the dialog's own side
-   padding (#vbox has 32px each side) so all three buttons have a real
-   chance of fitting on one line on narrow phones, without changing the
-   padding around the rest of the dialog's content. */
+/* x and facebook sit in one row. #v-share-pair is display:contents so its children are direct flex items of #v-share-row. flex-wrap is only a fallback for very narrow screens. */
+/* negative side margins let the row use the dialog's 32px side padding so the buttons fit on one line on narrow phones */
 #v-share-row{margin:16px -14px 0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 #v-share-pair{display:contents}
 .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #00ff00;color:#00ff00;padding:4px 8px;font-size:11px;letter-spacing:.5px;text-decoration:none;cursor:pointer;background:#000;box-sizing:border-box;white-space:nowrap;flex-shrink:0}
 .share-btn:hover{background:#001a00}
 .share-btn svg{flex-shrink:0}
-/* Narrow phones: shrink text/padding/icons first so the row fits without
-   scrolling; the #v-share-row overflow-x above is only the last resort. */
+/* narrow phones: shrink text, padding and icons first so the row fits. the overflow-x above is the last resort. */
 @media(max-width:380px){
   .share-btn{font-size:9.5px;padding:4px 6px;gap:3px}
   .share-btn svg{width:11px;height:11px}
@@ -207,10 +181,9 @@ svg{display:block;margin:0 auto}
 </div>
 
 <script>
-// ── TAXONOMY: the single source of truth for the family tree ─────────────
-// CLADES: each clade -> the clade it sits inside.   GENUS_PARENT: each genus -> its immediate clade.
-// To add a dinosaur: append "Name":"Clade" at the END of GENUS_PARENT (order matters a little: earlier genera are the
-// ones quoted as examples in clade pop-ups). Full lineages are derived below, so they can never disagree with each other.
+// --- taxonomy (the family tree lives here and nowhere else) ---
+// CLADES: clade -> its parent clade. GENUS_PARENT: genus -> its clade.
+// to add a dino, put "Name":"Clade" at the END of GENUS_PARENT (earlier genera get quoted first in clade pop-ups).
 const CLADES = {"Saurischia":"Dinosauria","Theropoda":"Saurischia","Averostra":"Theropoda","Tetanurae":"Averostra","Coelurosauria":"Tetanurae","Maniraptora":"Coelurosauria","Pennaraptora":"Maniraptora","Paraves":"Pennaraptora","Dromaeosauridae":"Paraves","Ornithischia":"Dinosauria","Genasauria":"Ornithischia","Neornithischia":"Genasauria","Cerapoda":"Neornithischia","Marginocephalia":"Cerapoda","Ceratopsia":"Marginocephalia","Ceratopsidae":"Ceratopsia","Chasmosaurinae":"Ceratopsidae","Carnosauria":"Tetanurae","Allosauria":"Carnosauria","Sauropodomorpha":"Saurischia","Sauropoda":"Sauropodomorpha","Neosauropoda":"Sauropoda","Macronaria":"Neosauropoda","Ornithopoda":"Cerapoda","Iguanodontia":"Ornithopoda","Troodontidae":"Paraves","Avialae":"Paraves","Tyrannosauroidea":"Coelurosauria","Tyrannosauridae":"Tyrannosauroidea","Thyreophora":"Genasauria","Stegosauria":"Thyreophora","Hadrosauridae":"Iguanodontia","Saurolophinae":"Hadrosauridae","Rhabdodontomorpha":"Iguanodontia","Diplodocoidea":"Neosauropoda","Flagellicaudata":"Diplodocoidea","Diplodocidae":"Flagellicaudata","Hesperornithes":"Avialae","Megalosauria":"Carnosauria","Megalosauridae":"Megalosauria","Centrosaurinae":"Ceratopsidae","Thescelosauridae":"Neornithischia","Pachycephalosauria":"Marginocephalia","Spinosauridae":"Megalosauria","Spinosaurinae":"Spinosauridae","Carcharodontosauria":"Allosauria","Brachiosauridae":"Macronaria","Somphospondyli":"Macronaria","Titanosauria":"Somphospondyli","Lithostrotia":"Titanosauria","Saltasauroidea":"Lithostrotia","Lambeosaurinae":"Hadrosauridae","Ornithomimosauria":"Coelurosauria","Ornithomimidae":"Ornithomimosauria","Ankylosauria":"Thyreophora","Nodosauridae":"Ankylosauria","Ceratosauria":"Averostra","Abelisauria":"Ceratosauria","Noasauridae":"Abelisauria","Oviraptorosauria":"Pennaraptora","Caenagnathidae":"Oviraptorosauria","Coelophysoidea":"Theropoda","Ankylosauridae":"Ankylosauria","Abelisauridae":"Abelisauria","Dryosauridae":"Iguanodontia","Mamenchisauridae":"Sauropoda","Dicraeosauridae":"Flagellicaudata","Baryonychinae":"Spinosauridae","Herrerasauria":"Saurischia","Leptoceratopsidae":"Ceratopsia","Enantiornithes":"Avialae","Heterodontosauridae":"Ornithischia","Elasmaria":"Iguanodontia","Silesauridae":"Ornithischia","Therizinosauria":"Maniraptora","Alvarezsauria":"Maniraptora","Rebbachisauridae":"Diplodocoidea","Deinocheiridae":"Ornithomimosauria","Turiasauria":"Sauropoda","Megaraptora":"Coelurosauria","Compsognathidae":"Coelurosauria","Unenlagiidae":"Dromaeosauridae","Oviraptoridae":"Oviraptorosauria","Colossosauria":"Lithostrotia","Rinconsauria":"Colossosauria","Proceratosauridae":"Tyrannosauroidea","Allosauridae":"Allosauria","Scansoriopterygidae":"Paraves","Lognkosauria":"Colossosauria"};
 const GENUS_PARENT = {"Richardoestesia":"Dromaeosauridae","Triceratops":"Chasmosaurinae","Saurornitholestes":"Dromaeosauridae","Allosaurus":"Allosauria","Paronychodon":"Paraves","Camarasaurus":"Macronaria","Iguanodon":"Iguanodontia","Troodon":"Troodontidae","Gallus":"Avialae","Tyrannosaurus":"Tyrannosauridae","Stegosaurus":"Stegosauria","Edmontosaurus":"Saurolophinae","Tenontosaurus":"Rhabdodontomorpha","Coturnix":"Avialae","Massospondylus":"Sauropodomorpha","Lagopus":"Avialae","Meleagris":"Avialae","Psittacosaurus":"Ceratopsia","Apatosaurus":"Diplodocidae","Diplodocus":"Diplodocidae","Hesperornis":"Hesperornithes","Megalosaurus":"Megalosauridae","Centrosaurus":"Centrosaurinae","Tarbosaurus":"Tyrannosauridae","Thescelosaurus":"Thescelosauridae","Megapodius":"Avialae","Dromaeosaurus":"Dromaeosauridae","Deinonychus":"Dromaeosauridae","Stegoceras":"Pachycephalosauria","Zalmoxes":"Rhabdodontomorpha","Spinosaurus":"Spinosaurinae","Carcharodontosaurus":"Carcharodontosauria","Camptosaurus":"Iguanodontia","Giraffatitan":"Brachiosauridae","Protoceratops":"Ceratopsia","Saurolophus":"Saurolophinae","Alamosaurus":"Saltasauroidea","Hypacrosaurus":"Lambeosaurinae","Rhabdodon":"Rhabdodontomorpha","Plateosaurus":"Sauropodomorpha","Ornithomimus":"Ornithomimidae","Sauropelta":"Nodosauridae","Pachycephalosaurus":"Pachycephalosauria","Ichthyornis":"Avialae","Nanosaurus":"Neornithischia","Colinus":"Avialae","Albertosaurus":"Tyrannosauridae","Dacentrurus":"Stegosauria","Gallimimus":"Ornithomimidae","Alectoris":"Avialae","Palaeortyx":"Avialae","Cetiosaurus":"Sauropoda","Corythosaurus":"Lambeosaurinae","Ceratosaurus":"Ceratosauria","Masiakasaurus":"Noasauridae","Torvosaurus":"Megalosauridae","Chirostenotes":"Caenagnathidae","Lyrurus":"Avialae","Lufengosaurus":"Sauropodomorpha","Kentrosaurus":"Stegosauria","Callipepla":"Avialae","Perdix":"Avialae","Coelophysis":"Coelophysoidea","Francolinus":"Avialae","Tympanuchus":"Avialae","Pinacosaurus":"Ankylosauridae","Kritosaurus":"Saurolophinae","Majungasaurus":"Abelisauridae","Tetrao":"Avialae","Dryosaurus":"Dryosauridae","Mamenchisaurus":"Mamenchisauridae","Scutellosaurus":"Thyreophora","Struthiosaurus":"Nodosauridae","Telmatosaurus":"Iguanodontia","Brontosaurus":"Diplodocidae","Gryposaurus":"Saurolophinae","Chasmosaurus":"Chasmosaurinae","Numida":"Avialae","Daspletosaurus":"Tyrannosauridae","Parasaurolophus":"Lambeosaurinae","Velociraptor":"Dromaeosauridae","Gorgosaurus":"Tyrannosauridae","Brachiosaurus":"Brachiosauridae","Lambeosaurus":"Lambeosaurinae","Alectrosaurus":"Tyrannosauroidea","Barosaurus":"Diplodocidae","Dicraeosaurus":"Dicraeosauridae","Euoplocephalus":"Ankylosauridae","Bagaceratops":"Ceratopsia","Struthiomimus":"Ornithomimidae","Mantellisaurus":"Iguanodontia","Bonasa":"Avialae","Yunnanosaurus":"Sauropodomorpha","Ankylosaurus":"Ankylosauridae","Polacanthus":"Nodosauridae","Edmontonia":"Nodosauridae","Pachyrhinosaurus":"Centrosaurinae","Agujaceratops":"Chasmosaurinae","Palaeocryptonyx":"Avialae","Sinosaurus":"Theropoda","Panoplosaurus":"Nodosauridae","Prosaurolophus":"Saurolophinae","Neuquensaurus":"Saltasauroidea","Phuwiangosaurus":"Somphospondyli","Anodontosaurus":"Ankylosauridae","Stenonychosaurus":"Troodontidae","Coelurus":"Coelurosauria","Acrocanthosaurus":"Carcharodontosauria","Dilophosaurus":"Theropoda","Thecodontosaurus":"Sauropodomorpha","Scelidosaurus":"Thyreophora","Monoclonius":"Centrosaurinae","Pentaceratops":"Chasmosaurinae","Dryptosaurus":"Tyrannosauroidea","Omeisaurus":"Mamenchisauridae","Torosaurus":"Chasmosaurinae","Eolambia":"Iguanodontia","Valdosaurus":"Dryosauridae","Baryonyx":"Baryonychinae","Citipes":"Caenagnathidae","Latagallina":"Avialae","Balochisaurus":"Titanosauria","Pakisaurus":"Titanosauria","Saraikimasoom":"Titanosauria","Glyptodontopelta":"Nodosauridae","Syntarsus":"Coelophysoidea","Herrerasaurus":"Herrerasauria","Haplocanthosaurus":"Diplodocoidea","Magyarosaurus":"Titanosauria","Hylaeosaurus":"Nodosauridae","Styracosaurus":"Centrosaurinae","Hypsilophodon":"Ornithopoda","Microraptor":"Dromaeosauridae","Leptorhynchos":"Caenagnathidae","Miophasianus":"Avialae","Baptornis":"Hesperornithes","Archaeopteryx":"Avialae","Lirainosaurus":"Titanosauria","Lesothosaurus":"Thyreophora","Orodromeus":"Thescelosauridae","Oryctodromeus":"Thescelosauridae","Ferenceratops":"Ceratopsia","Utahceratops":"Chasmosaurinae","Hypselospinus":"Iguanodontia","Hadrosaurus":"Saurolophinae","Pectinodon":"Troodontidae","Dendragapus":"Avialae","Melanorosaurus":"Sauropodomorpha","Gyposaurus":"Sauropodomorpha","Hesperosaurus":"Stegosauria","Asiaceratops":"Ceratopsia","Leptoceratops":"Leptoceratopsidae","Ouranosaurus":"Iguanodontia","Bactrosaurus":"Iguanodontia","Brachylophosaurus":"Saurolophinae","Megapnosaurus":"Coelophysoidea","Vitakridrinda":"Abelisauridae","Saurornithoides":"Troodontidae","Caenagnathus":"Caenagnathidae","Avimimus":"Oviraptorosauria","Pavo":"Avialae","Colymbus":"Avialae","Gobipteryx":"Enantiornithes","Erectopus":"Carnosauria","Antarctosaurus":"Lithostrotia","Malawisaurus":"Lithostrotia","Duriatitan":"Macronaria","Platypelta":"Ankylosauridae","Heterodontosaurus":"Heterodontosauridae","Vagaceratops":"Chasmosaurinae","Anchiceratops":"Chasmosaurinae","Atlascopcosaurus":"Elasmaria","Maiasaura":"Saurolophinae","Pararhabdodon":"Lambeosaurinae","Zapsalis":"Dromaeosauridae","Nuthetes":"Dromaeosauridae","Caenagnathasia":"Caenagnathidae","Ortalis":"Avialae","Tornieria":"Diplodocidae","Isisaurus":"Saltasauroidea","Gspsaurus":"Titanosauria","Aegyptosaurus":"Titanosauria","Wintonotitan":"Somphospondyli","Nodocephalosaurus":"Ankylosauridae","Echinodon":"Heterodontosauridae","Kwanasaurus":"Silesauridae","Sphaerotholus":"Pachycephalosauria","Prenocephale":"Pachycephalosauria","Turanoceratops":"Ceratopsia","Gobihadros":"Iguanodontia","Owenodon":"Iguanodontia","Arcovenator":"Abelisauridae","Deltadromeus":"Noasauridae","Atrociraptor":"Dromaeosauridae","Urbacodon":"Troodontidae","Anzu":"Caenagnathidae","Progura":"Avialae","Synoicus":"Avialae","Falcipennis":"Avialae","Phasianus":"Avialae","Martinavis":"Enantiornithes","Appalachiosaurus":"Tyrannosauroidea","Nanotyrannus":"Tyrannosauroidea","Stokesosaurus":"Tyrannosauroidea","Segnosaurus":"Therizinosauria","Mononykus":"Alvarezsauria","Trierarchuncus":"Alvarezsauria","Galeamopus":"Diplodocidae","Limaysaurus":"Rebbachisauridae","Ornithopsis":"Macronaria","Aeolosaurus":"Lithostrotia","Sulaimanisaurus":"Titanosauria","Sauroposeidon":"Somphospondyli","Diamantinasaurus":"Somphospondyli","Gongbusaurus":"Ornithischia","Oohkotokia":"Ankylosauridae","Saichania":"Ankylosauridae","Lycorhinus":"Heterodontosauridae","Foraminacephale":"Pachycephalosauria","Barilium":"Iguanodontia","Tanius":"Iguanodontia","Shantungosaurus":"Saurolophinae","Dromiceiomimus":"Ornithomimidae","Deinocheirus":"Deinocheiridae","Itemirus":"Dromaeosauridae","Xenovenator":"Troodontidae","Vorona":"Avialae","Cyrtonyx":"Avialae","Tetrastes":"Avialae","Brodavis":"Hesperornithes","Bahariasaurus":"Tetanurae","Liliensternus":"Coelophysoidea","Anchisaurus":"Sauropodomorpha","Supersaurus":"Diplodocidae","Rebbachisaurus":"Rebbachisauridae","Rapetosaurus":"Saltasauroidea","Ampelosaurus":"Titanosauria","Marisaurus":"Titanosauria","Euhelopus":"Somphospondyli","Lourinhasaurus":"Macronaria","Shunosaurus":"Sauropoda","Turiasaurus":"Turiasauria","Efraasia":"Sauropodomorpha","Scolosaurus":"Ankylosauridae","Tarchia":"Ankylosauridae","Chungkingosaurus":"Stegosauria","Fruitadens":"Heterodontosauridae","Lewisuchus":"Silesauridae","Asilisaurus":"Silesauridae","Zephyrosaurus":"Thescelosauridae","Brontotholus":"Pachycephalosauria","Colepiocephale":"Pachycephalosauria","Leaellynasaura":"Elasmaria","Protohadros":"Iguanodontia","Tsintaosaurus":"Lambeosaurinae","Magnapaulia":"Lambeosaurinae","Mochlodon":"Rhabdodontomorpha","Krzyzanowskisaurus":"Ornithischia","Sarcosaurus":"Coelophysoidea","Elaphrosaurus":"Noasauridae","Hesperonychus":"Dromaeosauridae","Utahraptor":"Dromaeosauridae","Albertavenator":"Troodontidae","Latenivenatrix":"Troodontidae","Sinovenator":"Troodontidae","Incisivosaurus":"Oviraptorosauria","Elmisaurus":"Caenagnathidae","Microvenator":"Caenagnathidae","Agriocharis":"Avialae","Leipoa":"Avialae","Centrocercus":"Avialae","Pternistis":"Avialae","Yanornis":"Avialae","Gargantuavis":"Avialae","Enantiornis":"Enantiornithes","Australovenator":"Megaraptora","Bistahieversor":"Tyrannosauridae","Ornitholestes":"Compsognathidae","Compsognathus":"Compsognathidae","Sinosauropteryx":"Compsognathidae","Tanycolagreus":"Coelurosauria","Yangchuanosaurus":"Carnosauria","Giganotosaurus":"Carcharodontosauria","Lamplughsaura":"Sauropoda","Baurutitan":"Lithostrotia","Rocasaurus":"Saltasauroidea","Khetranisaurus":"Titanosauria","Sibirotitan":"Somphospondyli","Patagosaurus":"Sauropoda","Eucnemesaurus":"Sauropodomorpha","Mbiresaurus":"Sauropodomorpha","Ferganocephale":"Ornithischia","Mymoorapelta":"Ankylosauria","Talarurus":"Ankylosauridae","Cedarpelta":"Ankylosauridae","Gastonia":"Nodosauridae","Nodosaurus":"Nodosauridae","Wuerhosaurus":"Stegosauria","Silesaurus":"Silesauridae","Parksosaurus":"Thescelosauridae","Fona":"Thescelosauridae","Kulindadromeus":"Neornithischia","Zuniceratops":"Ceratopsia","Archaeoceratops":"Ceratopsia","Montanoceratops":"Leptoceratopsidae","Cerasinops":"Leptoceratopsidae","Einiosaurus":"Centrosaurinae","Avaceratops":"Centrosaurinae","Arrhinoceratops":"Chasmosaurinae","Galleonosaurus":"Elasmaria","Muttaburrasaurus":"Elasmaria","Gasparinisaura":"Elasmaria","Mandschurosaurus":"Saurolophinae","Ahshislesaurus":"Saurolophinae","Claosaurus":"Iguanodontia","Levnesovia":"Iguanodontia","Osmakasaurus":"Iguanodontia","Archaeornithomimus":"Ornithomimidae","Spinostropheus":"Ceratosauria","Vitakrisaurus":"Abelisauridae","Limusaurus":"Noasauridae","Afrovenator":"Megalosauridae","Piveteausaurus":"Megalosauridae","Marshosaurus":"Tetanurae","Sinornithosaurus":"Dromaeosauridae","Acheroraptor":"Dromaeosauridae","Pyroraptor":"Dromaeosauridae","Variraptor":"Dromaeosauridae","Buitreraptor":"Unenlagiidae","Byronosaurus":"Troodontidae","Anchiornis":"Avialae","Oksoko":"Oviraptoridae","Nemegtomaia":"Oviraptoridae","Oviraptor":"Oviraptoridae","Gallinuloides":"Avialae","Oreortyx":"Avialae","Argillipes":"Avialae","Margaroperdix":"Avialae","Parahesperornis":"Hesperornithes","Longipteryx":"Avialae","Cathayornis":"Enantiornithes","Explorornis":"Enantiornithes","Zhyraornis":"Enantiornithes","Megaraptor":"Megaraptora","Teratophoneus":"Tyrannosauridae","Alioramus":"Tyrannosauridae","Bonapartenykus":"Alvarezsauria","Shuvuuia":"Alvarezsauria","Elopteryx":"Alvarezsauria","Ulughbegsaurus":"Carcharodontosauria","Tyrannotitan":"Carcharodontosauria","Saturnalia":"Sauropodomorpha","Pampadromaeus":"Sauropodomorpha","Sanpasaurus":"Sauropoda","Nigersaurus":"Rebbachisauridae","Amphicoelias":"Diplodocoidea","Nemegtosaurus":"Lithostrotia","Nullotitan":"Lithostrotia","Epachthosaurus":"Lithostrotia","Ibirania":"Saltasauroidea","Petrustitan":"Titanosauria","Maxakalisaurus":"Rinconsauria","Qaikshaheen":"Titanosauria","Imrankhanhero":"Titanosauria","Ikqaumishan":"Titanosauria","Savannasaurus":"Somphospondyli","Pelorosaurus":"Macronaria","Cedarosaurus":"Brachiosauridae","Tienshanosaurus":"Mamenchisauridae","Losillasaurus":"Turiasauria","Guaibasaurus":"Sauropodomorpha","Ammosaurus":"Sauropodomorpha","Tawa":"Herrerasauria","Sarcolestes":"Ankylosauria","Kunbarrasaurus":"Ankylosauria","Crichtonpelta":"Ankylosauridae","Tsagantegia":"Ankylosauridae","Shamosaurus":"Ankylosauridae","Gobisaurus":"Ankylosauridae","Niobrarasaurus":"Nodosauridae","Hoplitosaurus":"Nodosauridae","Texasetes":"Nodosauridae","Hungarosaurus":"Nodosauridae","Silvisaurus":"Nodosauridae","Loricatosaurus":"Stegosauria","Manidens":"Heterodontosauridae","Eucoelophysis":"Silesauridae","Jeholosaurus":"Thescelosauridae","Haya":"Thescelosauridae","Koreanosaurus":"Thescelosauridae","Homalocephale":"Pachycephalosauria","Breviceratops":"Ceratopsia","Yamaceratops":"Ceratopsia","Liaoceratops":"Ceratopsia","Prenoceratops":"Leptoceratopsidae","Gremlin":"Leptoceratopsidae","Auroraceratops":"Ceratopsia","Achelousaurus":"Centrosaurinae","Diabloceratops":"Centrosaurinae","Crittendenceratops":"Centrosaurinae","Coronosaurus":"Centrosaurinae","Rubeosaurus":"Centrosaurinae","Albertaceratops":"Centrosaurinae","Kosmoceratops":"Chasmosaurinae","Sektensaurus":"Elasmaria","Anabisetia":"Elasmaria","Qantassaurus":"Elasmaria","Talenkauen":"Elasmaria","Weewarrasaurus":"Elasmaria","Fostoria":"Elasmaria","Isasicursor":"Elasmaria","Lophorhothon":"Iguanodontia","Bolong":"Iguanodontia","Gilmoreosaurus":"Iguanodontia","Probactrosaurus":"Iguanodontia","Huehuecanauhtlus":"Iguanodontia","Huallasaurus":"Saurolophinae","Coahuilasaurus":"Saurolophinae","Kerberosaurus":"Saurolophinae","Augustynolophus":"Saurolophinae","Acristavus":"Saurolophinae","Jaxartosaurus":"Lambeosaurinae","Amurosaurus":"Lambeosaurinae","Canardia":"Lambeosaurinae","Velafrons":"Lambeosaurinae","Barsboldia":"Saurolophinae","Iguanacolossus":"Iguanodontia","Delapparentia":"Iguanodontia","Choyrodon":"Iguanodontia","Obelignathus":"Rhabdodontomorpha","Yandusaurus":"Neornithischia","Anserimimus":"Ornithomimidae","Aviatyrannis":"Ornithomimosauria","Kank":"Unenlagiidae","Segisaurus":"Coelophysoidea","Dracovenator":"Theropoda","Skorpiovenator":"Abelisauridae","Aucasaurus":"Abelisauridae","Laevisuchus":"Noasauridae","Velocisaurus":"Noasauridae","Kiyacursor":"Noasauridae","Chenanisaurus":"Abelisauridae","Suchomimus":"Baryonychinae","Nedcolbertia":"Coelurosauria","Balaur":"Dromaeosauridae","Shri":"Dromaeosauridae","Boreonykus":"Dromaeosauridae","Dakotaraptor":"Dromaeosauridae","Yurgovuchia":"Dromaeosauridae","Rahonavis":"Unenlagiidae","Austroraptor":"Unenlagiidae","Unenlagia":"Unenlagiidae","Neuquenraptor":"Unenlagiidae","Sinornithoides":"Troodontidae","Mei":"Troodontidae","Yulong":"Oviraptoridae","Heyuannia":"Oviraptoridae","Conchoraptor":"Oviraptoridae","Khaan":"Oviraptoridae","Citipati":"Oviraptoridae","Caudipteryx":"Oviraptorosauria","Hongshanornis":"Avialae","Archaeorhynchus":"Avialae","Kuszholia":"Avialae","Paraortyx":"Avialae","Pediocaetes":"Avialae","Coturnipes":"Avialae","Boreortalis":"Avialae","Enaliornis":"Hesperornithes","Asiahesperornis":"Hesperornithes","Canadaga":"Hesperornithes","Pasquiaornis":"Hesperornithes","Iberomesornis":"Enantiornithes","Concornis":"Enantiornithes","Bohaiornis":"Enantiornithes","Zhouornis":"Enantiornithes","Elbretornis":"Enantiornithes","Neuquenornis":"Enantiornithes","Avisaurus":"Enantiornithes","Bauxitornis":"Enantiornithes","Parapengornis":"Avialae","Protopteryx":"Enantiornithes","Dapingfangornis":"Enantiornithes","Abavornis":"Enantiornithes","Sazavis":"Enantiornithes","Nanantius":"Enantiornithes","Orkoraptor":"Megaraptora","Phuwiangvenator":"Megaraptora","Lourinhanosaurus":"Coelurosauria","Timimus":"Tyrannosauroidea","Thanatotheristes":"Tyrannosauridae","Labocania":"Tyrannosauridae","Kileskus":"Proceratosauridae","Khankhuuluu":"Tyrannosauroidea","Dilong":"Tyrannosauroidea","Falcarius":"Therizinosauria","Suzhousaurus":"Therizinosauria","Neimongosaurus":"Therizinosauria","Therizinosaurus":"Therizinosauria","Nothronychus":"Therizinosauria","Nanshiungosaurus":"Therizinosauria","Beipiaosaurus":"Therizinosauria","Sinocalliopteryx":"Compsognathidae","Alnashetri":"Alvarezsauria","Linhenykus":"Alvarezsauria","Albertonykus":"Alvarezsauria","Lusovenator":"Carcharodontosauria","Sinraptor":"Carnosauria","Fukuiraptor":"Carcharodontosauria","Chilantaisaurus":"Carcharodontosauria","Eocarcharia":"Carcharodontosauria","Veterupristisaurus":"Carcharodontosauria","Taurovenator":"Carcharodontosauria","Saurophaganax":"Allosauridae","Chindesaurus":"Herrerasauria","Staurikosaurus":"Herrerasauria","Macrocollum":"Sauropodomorpha","Jaklapallisaurus":"Sauropodomorpha","Ignavusaurus":"Sauropodomorpha","Coloradisaurus":"Sauropodomorpha","Sarahsaurus":"Sauropodomorpha","Adeopapposaurus":"Sauropodomorpha","Jingshanosaurus":"Sauropodomorpha","Xingxiulong":"Sauropodomorpha","Kotasaurus":"Sauropoda","Antetonitrus":"Sauropoda","Tazoudasaurus":"Sauropoda","Barapasaurus":"Sauropoda","Amargasaurus":"Dicraeosauridae","Suuwassea":"Dicraeosauridae","Sidersaura":"Rebbachisauridae","Demandasaurus":"Rebbachisauridae","Karongasaurus":"Titanosauria","Vahiny":"Lithostrotia","Paralititan":"Lithostrotia","Gondwanatitan":"Lithostrotia","Abditosaurus":"Saltasauroidea","Normanniasaurus":"Titanosauria","Menucocelsior":"Titanosauria","Bonitasaura":"Titanosauria","Paludititan":"Titanosauria","Dreadnoughtus":"Titanosauria","Notocolossus":"Colossosauria","Khanazeem":"Titanosauria","Barrosasaurus":"Titanosauria","Malarguesaurus":"Titanosauria","Chubutisaurus":"Somphospondyli","Tastavinsaurus":"Somphospondyli","Erketu":"Somphospondyli","Tangvayosaurus":"Somphospondyli","Bicharracosaurus":"Macronaria","Datousaurus":"Sauropoda","Jobaria":"Sauropoda","Janenschia":"Sauropoda","Wamweracaudia":"Mamenchisauridae","Tendaguria":"Turiasauria","Zby":"Turiasauria","Moabosaurus":"Turiasauria","Amanzia":"Turiasauria","Archaeodontosaurus":"Sauropoda","Camelotia":"Sauropodomorpha","Blikanasaurus":"Sauropodomorpha","Mussaurus":"Sauropodomorpha","Riojasaurus":"Sauropodomorpha","Plateosauravus":"Sauropodomorpha","Xiaosaurus":"Ornithischia","Pisanosaurus":"Ornithischia","Laquintasaura":"Thyreophora","Emausaurus":"Thyreophora","Jakapil":"Thyreophora","Vectipelta":"Ankylosauria","Sinankylosaurus":"Ankylosauria","Stegouros":"Ankylosauria","Antarctopelta":"Ankylosauria","Dracopelta":"Ankylosauria","Ziapelta":"Ankylosauridae","Akainacephalus":"Ankylosauridae","Dyoplosaurus":"Ankylosauridae","Zaraapelta":"Ankylosauridae","Jinyunpelta":"Ankylosauridae","Zuul":"Ankylosauridae","Bissektipelta":"Ankylosauridae","Aletopelta":"Ankylosauridae","Huaxiazhoulong":"Ankylosauridae","Liaoningosaurus":"Ankylosauridae","Ahshislepelta":"Ankylosauridae","Datai":"Ankylosauridae","Chuanqilong":"Ankylosauridae","Acantholipan":"Nodosauridae","Propanoplosaurus":"Nodosauridae","Gargoyleosaurus":"Nodosauridae","Animantarx":"Nodosauridae","Sauroplites":"Nodosauridae","Dongyangopelta":"Nodosauridae","Stegopelta":"Nodosauridae","Patagopelta":"Nodosauridae","Tatankacephalus":"Nodosauridae","Europelta":"Nodosauridae","Pawpawsaurus":"Nodosauridae","Invictarx":"Nodosauridae","Anoplosaurus":"Nodosauridae","Peloroplites":"Nodosauridae","Taohelong":"Nodosauridae","Borealopelta":"Nodosauridae","Spicomellus":"Ankylosauria","Bashanosaurus":"Stegosauria","Huayangosaurus":"Stegosauria","Gigantspinosaurus":"Stegosauria","Baiyinosaurus":"Stegosauria","Isaberrysaura":"Stegosauria","Tuojiangosaurus":"Stegosauria","Adratiklit":"Stegosauria","Thyreosaurus":"Stegosauria","Jiangjunosaurus":"Stegosauria","Yanbeilong":"Stegosauria","Paranthodon":"Stegosauria","Yingshanosaurus":"Stegosauria","Mongolostegus":"Stegosauria","Changdusaurus":"Stegosauria","Yuxisaurus":"Thyreophora","Abrictosaurus":"Heterodontosauridae","Pegomastax":"Heterodontosauridae","Tianyulong":"Heterodontosauridae","Eocursor":"Ornithischia","Gamatavus":"Silesauridae","Amanasaurus":"Silesauridae","Technosaurus":"Silesauridae","Sacisaurus":"Silesauridae","Diodorus":"Silesauridae","Lutungutali":"Silesauridae","Soumyasaurus":"Silesauridae","Agilisaurus":"Neornithischia","Hexinlusaurus":"Neornithischia","Enigmacursor":"Neornithischia","Kulindapteryx":"Neornithischia","Albertadromeus":"Thescelosauridae","Nevadadromeus":"Thescelosauridae","Yueosaurus":"Thescelosauridae","Doolysaurus":"Thescelosauridae","Changmiania":"Thescelosauridae","Stormbergia":"Neornithischia","Alaskacephale":"Pachycephalosauria","Sinocephale":"Pachycephalosauria","Platytholus":"Pachycephalosauria","Acrotholus":"Pachycephalosauria","Tylocephale":"Pachycephalosauria","Amtocephale":"Pachycephalosauria","Goyocephale":"Pachycephalosauria","Wannanosaurus":"Pachycephalosauria","Zavacephale":"Pachycephalosauria","Albalophosaurus":"Ceratopsia","Micropachycephalosaurus":"Ceratopsia","Mosaiceratops":"Ceratopsia","Beg":"Ceratopsia","Aquilops":"Ceratopsia","Graciliceratops":"Ceratopsia","Helioceratops":"Leptoceratopsidae","Ischioceratops":"Leptoceratopsidae","Udanoceratops":"Leptoceratopsidae","Unescoceratops":"Leptoceratopsidae","Koreaceratops":"Leptoceratopsidae","Gryphoceratops":"Leptoceratopsidae","Zhuchengceratops":"Leptoceratopsidae","Ferrisaurus":"Leptoceratopsidae","Sasayamagnomus":"Ceratopsia","Serendipaceratops":"Ceratopsia","Wendiceratops":"Centrosaurinae","Sinoceratops":"Centrosaurinae","Xenoceratops":"Centrosaurinae","Menefeeceratops":"Centrosaurinae","Nasutoceratops":"Centrosaurinae","Furcatoceratops":"Centrosaurinae","Yehuecauhceratops":"Centrosaurinae","Machairoceratops":"Centrosaurinae","Spinops":"Centrosaurinae","Stellasaurus":"Centrosaurinae","Medusaceratops":"Centrosaurinae","Lokiceratops":"Centrosaurinae","Coahuilaceratops":"Chasmosaurinae","Bisticeratops":"Chasmosaurinae","Judiceratops":"Chasmosaurinae","Terminocavus":"Chasmosaurinae","Sierraceratops":"Chasmosaurinae","Navajoceratops":"Chasmosaurinae","Bravoceratops":"Chasmosaurinae","Spiclypeus":"Chasmosaurinae","Titanoceratops":"Chasmosaurinae","Eotriceratops":"Chasmosaurinae","Regaliceratops":"Chasmosaurinae","Ajkaceratops":"Ceratopsia","Yinlong":"Ceratopsia","Chaoyangsaurus":"Ceratopsia","Hualianceratops":"Ceratopsia","Stenopelix":"Ceratopsia","Xuanhuaceratops":"Ceratopsia","Notoceratops":"Ceratopsia","Gideonmantellia":"Ornithopoda","Vectidromeus":"Ornithopoda","Daurosaurus":"Ornithopoda","Burianosaurus":"Ornithopoda","Chakisaurus":"Elasmaria","Trinisaura":"Elasmaria","Morrosaurus":"Elasmaria","Notohypsilophodon":"Elasmaria","Tietasaura":"Elasmaria","Mahuidacursor":"Elasmaria","Diluvicursor":"Elasmaria","Kangnasaurus":"Elasmaria","Macrogryphosaurus":"Elasmaria","Callovosaurus":"Iguanodontia","Iyuku":"Iguanodontia","Bayannurosaurus":"Iguanodontia","Altirhinus":"Iguanodontia","Magnamanus":"Iguanodontia","Theiophytalia":"Iguanodontia","Brighstoneus":"Iguanodontia","Comptonatus":"Iguanodontia","Zuoyunlong":"Iguanodontia","Gongpoquansaurus":"Iguanodontia","Yunganglong":"Iguanodontia","Datonglong":"Iguanodontia","Shuangmiaosaurus":"Iguanodontia","Equijubus":"Iguanodontia","Sirindhorna":"Iguanodontia","Cariocecus":"Iguanodontia","Cedrorestes":"Iguanodontia","Nanningosaurus":"Iguanodontia","Jintasaurus":"Iguanodontia","Zhanghenglong":"Iguanodontia","Fukuisaurus":"Iguanodontia","Nanyangosaurus":"Iguanodontia","Portellsaurus":"Iguanodontia","Morelladon":"Iguanodontia","Tethyshadros":"Iguanodontia","Kryptohadros":"Iguanodontia","Plesiohadros":"Iguanodontia","Eotrachodon":"Hadrosauridae","Secernosaurus":"Saurolophinae","Naashoibitosaurus":"Saurolophinae","Kelumapusaura":"Saurolophinae","Ugrunaaluk":"Saurolophinae","Bonapartesaurus":"Saurolophinae","Anasazisaurus":"Saurolophinae","Kamuysaurus":"Saurolophinae","Probrachylophosaurus":"Saurolophinae","Ornatops":"Saurolophinae","Wulagasaurus":"Saurolophinae","Angulomastacator":"Lambeosaurinae","Adelolophus":"Lambeosaurinae","Kazaklambia":"Lambeosaurinae","Latirhinus":"Lambeosaurinae","Charonosaurus":"Lambeosaurinae","Tlatolophus":"Lambeosaurinae","Olorotitan":"Lambeosaurinae","Ajnabia":"Lambeosaurinae","Minqaria":"Lambeosaurinae","Blasisaurus":"Lambeosaurinae","Adynomosaurus":"Lambeosaurinae","Taleta":"Lambeosaurinae","Arenysaurus":"Lambeosaurinae","Aralosaurus":"Lambeosaurinae","Nipponosaurus":"Lambeosaurinae","Lapampasaurus":"Hadrosauridae","Yamatosaurus":"Hadrosauridae","Malefica":"Hadrosauridae","Aquilarhinus":"Hadrosauridae","Rhinorex":"Saurolophinae","Laiyangosaurus":"Saurolophinae","Gongshuilong":"Saurolophinae","Jeyawati":"Iguanodontia","Haolong":"Iguanodontia","Xuwulong":"Iguanodontia","Batyrosaurus":"Iguanodontia","Ratchasimasaurus":"Iguanodontia","Koshisaurus":"Iguanodontia","Penelopognathus":"Iguanodontia","Qianjiangsaurus":"Iguanodontia","Gonkoken":"Iguanodontia","Fylax":"Iguanodontia","Siamodon":"Iguanodontia","Proa":"Iguanodontia","Riabininohadros":"Iguanodontia","Istiorachis":"Iguanodontia","Lanzhousaurus":"Iguanodontia","Napaisaurus":"Iguanodontia","Dakotadon":"Iguanodontia","Hippodraco":"Iguanodontia","Calvarius":"Iguanodontia","Cumnoria":"Iguanodontia","Dysalotosaurus":"Dryosauridae","Elrhazosaurus":"Dryosauridae","Eousdryosaurus":"Dryosauridae","Draconyx":"Iguanodontia","Oblitosaurus":"Iguanodontia","Hesperonyx":"Iguanodontia","Planicoxa":"Iguanodontia","Lurdusaurus":"Iguanodontia","Craspedodon":"Iguanodontia","Emiliasaura":"Rhabdodontomorpha","Matheronodon":"Rhabdodontomorpha","Pareisactus":"Rhabdodontomorpha","Convolosaurus":"Rhabdodontomorpha","Iani":"Rhabdodontomorpha","Transylvanosaurus":"Rhabdodontomorpha","Foskeia":"Rhabdodontomorpha","Ampelognathus":"Rhabdodontomorpha","Minimocursor":"Neornithischia","Pulaosaurus":"Neornithischia","Sanxiasaurus":"Neornithischia","Chilesaurus":"Ornithischia","Archaeocursor":"Ornithischia","Aepyornithomimus":"Ornithomimidae","Tototlmimus":"Ornithomimidae","Sinornithomimus":"Ornithomimidae","Dzharacursor":"Ornithomimidae","Rativates":"Ornithomimidae","Qiupalong":"Ornithomimidae","Mexidracon":"Ornithomimidae","Pelecanimimus":"Ornithomimosauria","Nqwebasaurus":"Ornithomimosauria","Kinnareemimus":"Ornithomimosauria","Lepidocheirosaurus":"Ornithomimosauria","Hexing":"Ornithomimosauria","Shenzhousaurus":"Ornithomimosauria","Beishanlong":"Ornithomimosauria","Garudimimus":"Deinocheiridae","Tyrannomimus":"Deinocheiridae","Paraxenisaurus":"Deinocheiridae","Harpymimus":"Deinocheiridae","Afromimus":"Ornithomimosauria","Arkansaurus":"Ornithomimosauria","Gojirasaurus":"Coelophysoidea","Dracoraptor":"Coelophysoidea","Lophostropheus":"Coelophysoidea","Panguraptor":"Coelophysoidea","Lucianovenator":"Coelophysoidea","Powellvenator":"Coelophysoidea","Procompsognathus":"Coelophysoidea","Camposaurus":"Coelophysoidea","Lepidus":"Coelophysoidea","Pendraig":"Coelophysoidea","Zupaysaurus":"Theropoda","Notatesseraeraptor":"Theropoda","Velocipes":"Theropoda","Fosterovenator":"Ceratosauria","Berberosaurus":"Ceratosauria","Genyodectes":"Ceratosauria","Saltriovenator":"Ceratosauria","Spectrovenator":"Abelisauridae","Kryptops":"Abelisauridae","Rugops":"Abelisauridae","Tarascosaurus":"Abelisauridae","Kurupi":"Abelisauridae","Eoabelisaurus":"Abelisauridae","Indosuchus":"Abelisauridae","Tralkasaurus":"Abelisauridae","Xenotarsosaurus":"Abelisauridae","Vitosaura":"Abelisauridae","Rahiolisaurus":"Abelisauridae","Ilokelesia":"Abelisauridae","Guemesia":"Abelisauridae","Abelisaurus":"Abelisauridae","Niebla":"Abelisauridae","Llukalkan":"Abelisauridae","Elemgasem":"Abelisauridae","Quilmesaurus":"Abelisauridae","Carnotaurus":"Abelisauridae","Koleken":"Abelisauridae","Viavenator":"Abelisauridae","Caletodraco":"Abelisauridae","Pycnonemosaurus":"Abelisauridae","Dahalokely":"Abelisauridae","Ekrixinatosaurus":"Abelisauridae","Thanos":"Abelisauridae","Genusaurus":"Abelisauridae","Rajasaurus":"Abelisauridae","Indosaurus":"Abelisauridae","Lametasaurus":"Abelisauridae","Austrocheirus":"Noasauridae","Ligabueino":"Noasauridae","Berthasaura":"Noasauridae","Noasaurus":"Noasauridae","Vespersaurus":"Noasauridae","Huinculsaurus":"Noasauridae","Kaijiangosaurus":"Tetanurae","Vallibonavenatrix":"Baryonychinae","Protathlitis":"Baryonychinae","Riojavenatrix":"Baryonychinae","Ceratosuchops":"Baryonychinae","Riparovenator":"Baryonychinae","Iberospinus":"Spinosauridae","Angaturama":"Spinosaurinae","Camarillasaurus":"Spinosaurinae","Oxalaia":"Spinosaurinae","Ichthyovenator":"Spinosaurinae","Irritator":"Spinosaurinae","Sciurumimus":"Megalosauria","Wiehenvenator":"Megalosauridae","Duriavenator":"Megalosauridae","Magnosaurus":"Megalosauridae","Eustreptospondylus":"Megalosauridae","Dubreuillosaurus":"Megalosauridae","Leshansaurus":"Megalosauridae","Xuanhanosaurus":"Tetanurae","Condorraptor":"Tetanurae","Piatnitzkysaurus":"Tetanurae","Streptospondylus":"Megalosauria","Becklespinax":"Megalosauria","Pandoravenator":"Theropoda","Bicentenaria":"Coelurosauria","Yixianosaurus":"Maniraptora","Serikornis":"Paraves","Pneumatoraptor":"Paraves","Pedopenna":"Paraves","Epidexipteryx":"Paraves","Zhongornis":"Paraves","Overoraptor":"Paraves","Caihong":"Paraves","Pamparaptor":"Paraves","Kuru":"Dromaeosauridae","Daurlong":"Dromaeosauridae","Graciliraptor":"Dromaeosauridae","Changyuraptor":"Dromaeosauridae","Shanag":"Dromaeosauridae","Zhongjianosaurus":"Dromaeosauridae","Dromaeosauroides":"Dromaeosauridae","Vectiraptor":"Dromaeosauridae","Adasaurus":"Dromaeosauridae","Dineobellator":"Dromaeosauridae","Tsaagan":"Dromaeosauridae","Linheraptor":"Dromaeosauridae","Kansaignathus":"Dromaeosauridae","Achillobator":"Dromaeosauridae","Imperobator":"Dromaeosauridae","Bambiraptor":"Dromaeosauridae","Tianyuraptor":"Dromaeosauridae","Zhenyuanlong":"Dromaeosauridae","Hulsanpes":"Dromaeosauridae","Mahakala":"Dromaeosauridae","Halszkaraptor":"Dromaeosauridae","Natovenator":"Dromaeosauridae","Ypupiara":"Unenlagiidae","Diuqin":"Unenlagiidae","Luanchuanraptor":"Dromaeosauridae","Wulong":"Dromaeosauridae","Papiliovenator":"Troodontidae","Gobivenator":"Troodontidae","Hypnovenator":"Troodontidae","Linhevenator":"Troodontidae","Zanabazar":"Troodontidae","Talos":"Troodontidae","Borogovia":"Troodontidae","Geminiraptor":"Troodontidae","Tochisaurus":"Troodontidae","Sinusonasus":"Troodontidae","Harenadraco":"Troodontidae","Xiaotingia":"Troodontidae","Jianianhualong":"Troodontidae","Archaeornithoides":"Troodontidae","Daliansaurus":"Troodontidae","Hesperornithoides":"Troodontidae","Philovenator":"Troodontidae","Jinfengopteryx":"Troodontidae","Liaoningvenator":"Troodontidae","Tamarro":"Troodontidae","Almas":"Troodontidae","Xixiasaurus":"Troodontidae","Eosinopteryx":"Paraves","Epidendrosaurus":"Paraves","Xingtianosaurus":"Oviraptorosauria","Similicaudipteryx":"Oviraptorosauria","Luoyanggia":"Oviraptoridae","Nankangia":"Oviraptoridae","Shixinggia":"Oviraptoridae","Banji":"Oviraptoridae","Jiangxisaurus":"Oviraptoridae","Ganzhousaurus":"Oviraptoridae","Ingenia":"Oviraptoridae","Machairasaurus":"Oviraptoridae","Wulatelong":"Oviraptoridae","Rinchenia":"Oviraptoridae","Huanansaurus":"Oviraptoridae","Tongtianlong":"Oviraptoridae","Corythoraptor":"Oviraptoridae","Gobiraptor":"Oviraptoridae","Yuanyanglong":"Oviraptorosauria","Hagryphus":"Caenagnathidae","Epichirostenotes":"Caenagnathidae","Apatoraptor":"Caenagnathidae","Gigantoraptor":"Caenagnathidae","Eoneophron":"Caenagnathidae","Anomalipes":"Caenagnathidae","Beibeilong":"Caenagnathidae","Ningyuansaurus":"Oviraptorosauria","Protarchaeopteryx":"Oviraptorosauria","Ambopteryx":"Scansoriopterygidae","Yi":"Scansoriopterygidae","Scansoriopteryx":"Scansoriopterygidae","Fujianvenator":"Avialae","Alcmonavis":"Avialae","Dalianraptor":"Avialae","Alamitornis":"Avialae","Juehuaornis":"Avialae","Dingavis":"Avialae","Songlingornis":"Avialae","Parahongshanornis":"Avialae","Yixianornis":"Avialae","Archaeornithura":"Avialae","Tianyuornis":"Avialae","Longicrusavis":"Avialae","Bellulia":"Avialae","Piscivoravis":"Avialae","Jianchangornis":"Avialae","Hollanda":"Avialae","Antarcticavis":"Avialae","Liaoningornis":"Avialae","Ambiortus":"Avialae","Yumenornis":"Avialae","Apsaravis":"Avialae","Eogranivora":"Avialae","Kaririavis":"Avialae","Jiuquanornis":"Avialae","Schizooura":"Avialae","Mengciusornis":"Avialae","Patagopteryx":"Avialae","Zhongjianornis":"Avialae","Changmaornis":"Avialae","Apatornis":"Avialae","Janavis":"Avialae","Paraortygoides":"Avialae","Parapavo":"Avialae","Palintropus":"Avialae","Amitabha":"Avialae","Procrax":"Avialae","Sobniogallus":"Avialae","Caccabis":"Avialae","Ptilopachus":"Avialae","Nanortyx":"Avialae","Miortyx":"Avialae","Odontophorus":"Avialae","Bumbanipodius":"Avialae","Scopelortyx":"Avialae","Mwalau":"Avialae","Ngawupodius":"Avialae","Garrdimalga":"Avialae","Aepypodius":"Avialae","Palaealectoris":"Avialae","Gigantibis":"Avialae","Bumbanortyx":"Avialae","Telecrex":"Avialae","Afropavo":"Avialae","Plioperdix":"Avialae","Pliogallus":"Avialae","Palaeophasianus":"Avialae","Bambusicola":"Avialae","Syrmaticus":"Avialae","Diangallus":"Avialae","Scleroptila":"Avialae","Peliperdix":"Avialae","Litoripes":"Avialae","Penelope":"Avialae","Palaeonossax":"Avialae","Crax":"Avialae","Namaortyx":"Avialae","Taoperdix":"Avialae","Waltonortyx":"Avialae","Xorazmortyx":"Avialae","Crateropteryx":"Avialae","Archaeovolans":"Avialae","Cerebavis":"Avialae","Similiyanornis":"Avialae","Abitusavis":"Avialae","Qinornis":"Avialae","Potamornis":"Hesperornithes","Judinornis":"Hesperornithes","Fumicollis":"Hesperornithes","Chupkaornis":"Hesperornithes","Limenavis":"Avialae","Tingmiatornis":"Avialae","Iaceornis":"Avialae","Kookne":"Avialae","Chaoyangia":"Avialae","Kunpengornis":"Avialae","Xinghaiornis":"Avialae","Yatenavis":"Avialae","Xiangornis":"Avialae","Vescornis":"Enantiornithes","Otogornis":"Enantiornithes","Gracilornis":"Enantiornithes","Longchengornis":"Enantiornithes","Largirostrornis":"Enantiornithes","Alethoalaornis":"Enantiornithes","Avimaia":"Enantiornithes","Gretcheniao":"Enantiornithes","Dunhuangia":"Enantiornithes","Eoalulavis":"Enantiornithes","Falcatakely":"Avialae","Shenqiornis":"Enantiornithes","Longusunguis":"Enantiornithes","Sulcavis":"Enantiornithes","Parabohaiornis":"Enantiornithes","Neobohaiornis":"Enantiornithes","Yuanjiawaornis":"Enantiornithes","Fortipesavis":"Enantiornithes","Feitianius":"Enantiornithes","Microenantiornis":"Enantiornithes","Navaornis":"Avialae","Flexomornis":"Enantiornithes","Castignovolucris":"Enantiornithes","Chromeornis":"Avialae","Longirostravis":"Avialae","Shengjingornis":"Avialae","Camptodontornis":"Avialae","Boluochia":"Avialae","Rapaxavis":"Avialae","Shanweiniao":"Avialae","Yuornis":"Enantiornithes","Imparavis":"Enantiornithes","Gobipipus":"Enantiornithes","Eocathayornis":"Enantiornithes","Noguerornis":"Enantiornithes","Huoshanornis":"Enantiornithes","Houornis":"Enantiornithes","Linyiornis":"Enantiornithes","Yungavolucris":"Enantiornithes","Elsornis":"Enantiornithes","Pterygornis":"Enantiornithes","Qiliania":"Enantiornithes","Dalingheornis":"Enantiornithes","Cratoavis":"Enantiornithes","Grabauornis":"Enantiornithes","Evgenavis":"Enantiornithes","Piscivorenantiornis":"Enantiornithes","Cruralispennia":"Enantiornithes","Parvavis":"Enantiornithes","Sinornis":"Enantiornithes","Paraprotopteryx":"Enantiornithes","Fortunguavis":"Enantiornithes","Enantiophoenix":"Enantiornithes","Intiornis":"Enantiornithes","Soroavisaurus":"Enantiornithes","Mirarce":"Enantiornithes","Halimornis":"Enantiornithes","Gettyia":"Enantiornithes","Lectavis":"Enantiornithes","Brevirostruavis":"Enantiornithes","Shangyang":"Avialae","Elektorornis":"Avialae","Orienantius":"Enantiornithes","Pengornis":"Avialae","Yuanchuavis":"Avialae","Eopengornis":"Avialae","Chiappeavis":"Avialae","Musivavis":"Enantiornithes","Catenoleimus":"Enantiornithes","Lenesornis":"Enantiornithes","Incolornis":"Enantiornithes","Kizylkumavis":"Enantiornithes","Alexornis":"Enantiornithes","Gurilynia":"Enantiornithes","Junornis":"Enantiornithes","Holbotia":"Enantiornithes","Eoenantiornis":"Enantiornithes","Monoenantiornis":"Enantiornithes","Neimengornis":"Enantiornithes","Kompsornis":"Enantiornithes","Aurornis":"Avialae","Baminornis":"Avialae","Zhengheornis":"Enantiornithes","Fukuipteryx":"Avialae","Migmanychion":"Maniraptora","Siats":"Megaraptora","Vayuraptor":"Megaraptora","Murusraptor":"Megaraptora","Aerosteon":"Megaraptora","Joaquinraptor":"Megaraptora","Maip":"Megaraptora","Tratayenia":"Megaraptora","Aoniraptor":"Megaraptora","Eotyrannus":"Tyrannosauroidea","Suskityrannus":"Tyrannosauroidea","Gualicho":"Tyrannosauroidea","Juratyrant":"Tyrannosauroidea","Bagaraatan":"Tyrannosauridae","Yezosaurus":"Tyrannosauridae","Dynamoterror":"Tyrannosauridae","Zhuchengtyrannus":"Tyrannosauridae","Nanuqsaurus":"Tyrannosauridae","Lythronax":"Tyrannosauridae","Asiatyrannus":"Tyrannosauridae","Raptorex":"Tyrannosauroidea","Moros":"Tyrannosauroidea","Sinotyrannus":"Proceratosauridae","Guanlong":"Proceratosauridae","Yutyrannus":"Proceratosauridae","Proceratosaurus":"Proceratosauridae","Calamosaurus":"Tyrannosauroidea","Jinbeisaurus":"Tyrannosauroidea","Xiongguanlong":"Tyrannosauroidea","Timurlengia":"Tyrannosauroidea","Teihivenator":"Tyrannosauroidea","Juravenator":"Coelurosauria","Duonychus":"Therizinosauria","Tiantaisaurus":"Therizinosauria","Paralitherizinosaurus":"Therizinosauria","Erliansaurus":"Therizinosauria","Eshanosaurus":"Therizinosauria","Enigmosaurus":"Therizinosauria","Martharaptor":"Therizinosauria","Alxasaurus":"Therizinosauria","Fukuivenator":"Therizinosauria","Lingyuanosaurus":"Therizinosauria","Erlikosaurus":"Therizinosauria","Jianchangosaurus":"Therizinosauria","Aratasaurus":"Coelurosauria","Mirischia":"Compsognathidae","Brasileosaurus":"Coelurosauria","Xinjiangovenator":"Coelurosauria","Aristosuchus":"Compsognathidae","Scipionyx":"Compsognathidae","Aniksosaurus":"Compsognathidae","Huaxiagnathus":"Compsognathidae","Xunmenglong":"Compsognathidae","Aorun":"Alvarezsauria","Qiupanykus":"Alvarezsauria","Nemegtonykus":"Alvarezsauria","Haplocheirus":"Alvarezsauria","Bannykus":"Alvarezsauria","Patagonykus":"Alvarezsauria","Xiyunykus":"Alvarezsauria","Tugulusaurus":"Alvarezsauria","Alvarezsaurus":"Alvarezsauria","Xixianykus":"Alvarezsauria","Jaculinykus":"Alvarezsauria","Parvicursor":"Alvarezsauria","Ondogurvel":"Alvarezsauria","Dzharaonyx":"Alvarezsauria","Albinykus":"Alvarezsauria","Ceratonykus":"Alvarezsauria","Khulsanurus":"Alvarezsauria","Achillesaurus":"Alvarezsauria","Shishugounykus":"Alvarezsauria","Huadanosaurus":"Compsognathidae","Zuolong":"Coelurosauria","Ngexisaurus":"Coelurosauria","Santanaraptor":"Coelurosauria","Kol":"Coelurosauria","Gasosaurus":"Megalosauria","Datanglong":"Carcharodontosauria","Siamraptor":"Carcharodontosauria","Asfaltovenator":"Allosauria","Alpkarakush":"Carnosauria","Siamotyrannus":"Carnosauria","Metriacanthosaurus":"Carnosauria","Shidaisaurus":"Carnosauria","Yuanmouraptor":"Carnosauria","Neovenator":"Carcharodontosauria","Tameryraptor":"Carcharodontosauria","Concavenator":"Carcharodontosauria","Kelmayisaurus":"Carcharodontosauria","Meraxes":"Carcharodontosauria","Unquillosaurus":"Carcharodontosauria","Shaochilong":"Carcharodontosauria","Mapusaurus":"Carcharodontosauria","Lajasvenator":"Carcharodontosauria","Monolophosaurus":"Allosauria","Cruxicheiros":"Megalosauria","Vectaerovenator":"Tetanurae","Shanyangosaurus":"Tetanurae","Cryolophosaurus":"Theropoda","Chuandongocoelurus":"Tetanurae","Yunyangosaurus":"Tetanurae","Kayentavenator":"Tetanurae","Erythrovenator":"Theropoda","Anteavis":"Theropoda","Shuangbaisaurus":"Theropoda","Yaverlandia":"Coelurosauria","Ptychotherates":"Herrerasauria","Sanjuansaurus":"Herrerasauria","Gnathovorax":"Herrerasauria","Buriolestes":"Sauropodomorpha","Huayracursor":"Sauropodomorpha","Panphagia":"Sauropodomorpha","Chromogisaurus":"Sauropodomorpha","Glacialisaurus":"Sauropodomorpha","Ngwevu":"Sauropodomorpha","Leyesaurus":"Sauropodomorpha","Pradhania":"Sauropodomorpha","Wudingloong":"Sauropodomorpha","Tuebingosaurus":"Sauropodomorpha","Xiangyunloong":"Sauropodomorpha","Musankwa":"Sauropodomorpha","Irisosaurus":"Sauropodomorpha","Lishulong":"Sauropodomorpha","Aardonyx":"Sauropodomorpha","Gongxianosaurus":"Sauropodomorpha","Ledumahadi":"Sauropodomorpha","Seitaad":"Sauropodomorpha","Microdontosaurus":"Sauropoda","Vulcanodon":"Sauropoda","Tapinosaurus":"Sauropoda","Chinshakiangosaurus":"Sauropoda","Ingentia":"Sauropoda","Lessemsaurus":"Sauropoda","Spinophorosaurus":"Sauropoda","Amygdalodon":"Sauropoda","Lingwulong":"Flagellicaudata","Leinkupal":"Diplodocidae","Ardetosaurus":"Diplodocidae","Dinheirosaurus":"Diplodocidae","Cetiosauriscus":"Flagellicaudata","Dyslocosaurus":"Dicraeosauridae","Brachytrachelopan":"Dicraeosauridae","Bajadasaurus":"Dicraeosauridae","Pilmatueia":"Dicraeosauridae","Kaatedocus":"Dicraeosauridae","Amargatitanis":"Dicraeosauridae","Smitanosaurus":"Dicraeosauridae","Athenar":"Dicraeosauridae","Campananeyen":"Rebbachisauridae","Agustinia":"Rebbachisauridae","Amazonsaurus":"Rebbachisauridae","Rayososaurus":"Rebbachisauridae","Katepensaurus":"Rebbachisauridae","Xenoposeidon":"Rebbachisauridae","Histriasaurus":"Rebbachisauridae","Cienciargentina":"Rebbachisauridae","Maraapunisaurus":"Rebbachisauridae","Astigmasaura":"Rebbachisauridae","Zapalasaurus":"Rebbachisauridae","Nopcsaspondylus":"Rebbachisauridae","Tataouinea":"Rebbachisauridae","Itapeuasaurus":"Rebbachisauridae","Cathartesaura":"Rebbachisauridae","Lavocatisaurus":"Rebbachisauridae","Comahuesaurus":"Rebbachisauridae","Fusuisaurus":"Macronaria","Liaoningotitan":"Macronaria","Fukuititan":"Macronaria","Garumbatitan":"Somphospondyli","Austrosaurus":"Somphospondyli","Jiangshanosaurus":"Somphospondyli","Dongbeititan":"Somphospondyli","Triunfosaurus":"Somphospondyli","Quaesitosaurus":"Lithostrotia","Kaijutitan":"Lithostrotia","Bustingorrytitan":"Lithostrotia","Uriash":"Lithostrotia","Shingopana":"Lithostrotia","Arackar":"Lithostrotia","Atacamatitan":"Lithostrotia","Caieiria":"Lithostrotia","Panamericansaurus":"Lithostrotia","Tapuiasaurus":"Saltasauroidea","Udelartitan":"Saltasauroidea","Titanomachya":"Saltasauroidea","Qingxiusaurus":"Saltasauroidea","Yamanasaurus":"Saltasauroidea","Saltasaurus":"Saltasauroidea","Bonatitan":"Saltasauroidea","Igai":"Saltasauroidea","Qunkasaura":"Saltasauroidea","Opisthocoelicaudia":"Saltasauroidea","Nicksaurus":"Saltasauroidea","Zhuchengtitan":"Saltasauroidea","Pellegrinisaurus":"Lithostrotia","Elaltitan":"Lithostrotia","Jainosaurus":"Lithostrotia","Lohuecotitan":"Titanosauria","Patagotitan":"Titanosauria","Argentinosaurus":"Titanosauria","Inawentu":"Titanosauria","Garrigatitan":"Titanosauria","Atsinganosaurus":"Titanosauria","Tengrisaurus":"Titanosauria","Mnyamawamtuka":"Titanosauria","Mongolosaurus":"Titanosauria","Andesaurus":"Titanosauria","Hamititan":"Titanosauria","Argyrosaurus":"Titanosauria","Bravasaurus":"Rinconsauria","Arrudatitan":"Rinconsauria","Overosaurus":"Rinconsauria","Chadititan":"Rinconsauria","Rinconsaurus":"Rinconsauria","Muyelensaurus":"Rinconsauria","Pitekunsaurus":"Rinconsauria","Punatitan":"Rinconsauria","Rukwatitan":"Rinconsauria","Brasilotitan":"Rinconsauria","Uberabatitan":"Rinconsauria","Puertasaurus":"Colossosauria","Chucarosaurus":"Colossosauria","Mendozasaurus":"Lognkosauria","Phosphatotitan":"Lognkosauria","Quetecsaurus":"Lognkosauria","Futalognkosaurus":"Lognkosauria","Drusilasaura":"Lognkosauria","Traukutitan":"Lognkosauria","Austroposeidon":"Lognkosauria","Dongyangosaurus":"Titanosauria","Yeneen":"Titanosauria","Baotianmansaurus":"Titanosauria","Tiamat":"Titanosauria","Laplatasaurus":"Titanosauria","Choconsaurus":"Titanosauria","Petrobrasaurus":"Titanosauria","Narambuenatitan":"Titanosauria","Gandititan":"Titanosauria","Baalsaurus":"Titanosauria","Borealosaurus":"Titanosauria","Ninjatitan":"Titanosauria","Abdarainurus":"Titanosauria","Dasosaurus":"Somphospondyli","Yunmenglong":"Somphospondyli","Angolatitan":"Somphospondyli","Sonidosaurus":"Somphospondyli","Astrophocaudia":"Somphospondyli","Europatitan":"Somphospondyli","Ligabuesaurus":"Somphospondyli","Jiangxititan":"Somphospondyli","Brontomerus":"Somphospondyli","Dzharatitanis":"Somphospondyli","Mansourasaurus":"Somphospondyli","Sarmientosaurus":"Somphospondyli","Padillasaurus":"Somphospondyli","Australodocus":"Somphospondyli","Gannansaurus":"Somphospondyli","Liubangosaurus":"Somphospondyli","Huanghetitan":"Somphospondyli","Ruixinia":"Somphospondyli","Huabeisaurus":"Somphospondyli","Ruyangosaurus":"Somphospondyli","Qiaowanlong":"Somphospondyli","Silutitan":"Somphospondyli","Gobititan":"Somphospondyli","Tambatitanis":"Somphospondyli","Daxiatitan":"Somphospondyli","Yongjinglong":"Somphospondyli","Nagatitan":"Somphospondyli","Xianshanosaurus":"Somphospondyli","Oceanotitan":"Macronaria","Soriatitan":"Brachiosauridae","Vouivria":"Brachiosauridae","Galvesaurus":"Brachiosauridae","Lusotitan":"Brachiosauridae","Sonorasaurus":"Brachiosauridae","Venenosaurus":"Brachiosauridae","Abydosaurus":"Brachiosauridae","Fushanosaurus":"Macronaria","Dashanpusaurus":"Macronaria","Yuzhoulong":"Macronaria","Atlasaurus":"Macronaria","Aragosaurus":"Macronaria","Tehuelchesaurus":"Macronaria","Europasaurus":"Macronaria","Perijasaurus":"Sauropoda","Chebsaurus":"Sauropoda","Protognathosaurus":"Sauropoda","Bagualia":"Sauropoda","Lapparentosaurus":"Sauropoda","Nebulasaurus":"Sauropoda","Rhoetosaurus":"Sauropoda","Cardiodon":"Sauropoda","Dystrophaeus":"Sauropoda","Hudiesaurus":"Mamenchisauridae","Eomamenchisaurus":"Mamenchisauridae","Volgatitan":"Mamenchisauridae","Tonganosaurus":"Mamenchisauridae","Analong":"Mamenchisauridae","Qijianglong":"Mamenchisauridae","Tongnanlong":"Mamenchisauridae","Bellusaurus":"Mamenchisauridae","Daanosaurus":"Mamenchisauridae","Rhomaleopakhus":"Mamenchisauridae","Klamelisaurus":"Mamenchisauridae","Abrosaurus":"Mamenchisauridae","Jingiella":"Mamenchisauridae","Uragasaurus":"Mamenchisauridae","Chuanjiesaurus":"Mamenchisauridae","Huangshanlong":"Mamenchisauridae","Anhuilong":"Mamenchisauridae","Yuanmousaurus":"Mamenchisauridae","Xinjiangtitan":"Mamenchisauridae","Ferganasaurus":"Sauropoda","Narindasaurus":"Turiasauria","Mierasaurus":"Turiasauria","Huashanosaurus":"Sauropoda","Haestasaurus":"Sauropoda","Jinchuanloong":"Sauropoda","Volkheimeria":"Sauropoda","Oplosaurus":"Sauropoda","Isanosaurus":"Sauropoda","Pulanesaura":"Sauropoda","Ohmdenosaurus":"Sauropoda","Damalasaurus":"Sauropoda","Schleitheimia":"Sauropodomorpha","Yizhousaurus":"Sauropodomorpha","Leonerasaurus":"Sauropodomorpha","Meroktenos":"Sauropodomorpha","Sefapanosaurus":"Sauropodomorpha","Arcusaurus":"Sauropodomorpha","Nambalia":"Sauropodomorpha","Eoraptor":"Sauropodomorpha","Qianlong":"Sauropodomorpha","Agnosphitys":"Sauropodomorpha","Asylosaurus":"Sauropodomorpha","Unaysaurus":"Sauropodomorpha","Issi":"Sauropodomorpha","Xixiposaurus":"Sauropodomorpha","Ruehleia":"Sauropodomorpha","Yimenosaurus":"Sauropodomorpha","Actiosaurus":"Sauropodomorpha","Bagualosaurus":"Sauropodomorpha","Kholumolumo":"Sauropodomorpha","Pantydraco":"Sauropodomorpha","Ahvaytum":"Sauropodomorpha","Eodromaeus":"Saurischia","Saltopus":"Saurischia","Nhandumirim":"Saurischia","Daemonosaurus":"Herrerasauria","Alwalkeria":"Saurischia","Eugongbusaurus":"Ornithischia","Minotaurasaurus":"Ankylosauridae","Hylosaurus":"Nodosauridae","Hoplosaurus":"Nodosauridae","Euskelesaurus":"Stegosauria","Alcovasaurus":"Stegosauria","Sauraechmodon":"Stegosauria","Priodontosaurus":"Stegosauria","Hanssuesia":"Pachycephalosauria","Xuanhuasaurus":"Ceratopsia","Eucentrosaurus":"Centrosaurinae","Ponerosteus":"Ornithopoda","Proiguanodon":"Iguanodontia","Koutalisaurus":"Lambeosaurinae","Nectosaurus":"Hadrosauridae","Paulodon":"Iguanodontia","Proyandusaurus":"Ornithopoda","Sangonghesaurus":"Ankylosauria","Ornithomimidorum":"Ornithomimidae","Sigilmassasaurus":"Spinosaurinae","Ostromia":"Avialae","Nemegtia":"Oviraptoridae","Wellnhoferia":"Avialae","Eortyx":"Avialae","Ameripodius":"Avialae","Quercymegapodius":"Avialae","Macrocephalon":"Avialae","Talegalla":"Avialae","Eulipoa":"Avialae","Alectura":"Avialae","Acryllium":"Avialae","Schaubortyx":"Avialae","Tetraogallus":"Avialae","Archaeophasianus":"Avialae","Chrysolophus":"Avialae","Lophura":"Avialae","Miogallus":"Avialae","Percolinus":"Avialae","Pirortyx":"Avialae","Penelopina":"Avialae","Chamaepetes":"Avialae","Pipile":"Avialae","Aburria":"Avialae","Oreophasis":"Avialae","Pauxi":"Avialae","Archaealectrornis":"Avialae","Eupterornis":"Avialae","Guildavis":"Avialae","Mirusavis":"Enantiornithes","Cuspirostrisornis":"Enantiornithes","Qianzhousaurus":"Tyrannosauridae","Shuuvuia":"Alvarezsauria","Altispinax":"Megalosauria","Dachongosaurus":"Sauropoda","Microsaurops":"Sauropoda","Adamantisaurus":"Rinconsauria","Galveosaurus":"Macronaria","Zigongosaurus":"Mamenchisauridae","Eosauropoda":"Sauropoda","Oshanosaurus":"Sauropoda","Coloradia":"Sauropodomorpha","Avalonianus":"Saurischia","Dornraptor":"Averostra","Ozraptor":"Theropoda","Astrodon":"Macronaria","Tharosaurus":"Sauropoda"};
 const TAXA = (() => {
@@ -223,10 +196,8 @@ const TARGET_POOL = ["Triceratops","Allosaurus","Camarasaurus","Iguanodon","Troo
 const BY_NAME = {};
 for (const t of TAXA) BY_NAME[t.name.toLowerCase()] = t;
 
-// ── CLADE DEFINITIONS ────────────────────────────────────────
-// Hand-written node-based definitions for well-known clades in the shown
-// taxonomy. Anything not listed here falls back to an auto-generated
-// definition built from the taxonomy data itself (see cladeDefinition()).
+// --- clade definitions ---
+// hand-written for the well-known clades. everything else gets an auto one (see cladeDefinition()).
 const CLADE_DEFS = {
   "Dinosauria": "Dinosauria is defined as the most recent common ancestor of Triceratops and Passer (the house sparrow), and all of its descendants.",
   "Saurischia": "Saurischia (\u201clizard-hipped\u201d dinosaurs) is defined as all dinosaurs more closely related to birds than to Triceratops.",
@@ -308,9 +279,7 @@ const CLADE_DEFS = {
   "Turiasauria": "Turiasauria is a group of non-neosauropod sauropods known mostly from the Jurassic of Europe. Examples include Turiasaurus and Zby.",
 };
 
-// Programmatic backbone: which clade sits inside which, derived directly
-// from every taxon's lineage. Used to auto-generate a definition for any
-// clade not covered by CLADE_DEFS above.
+// clade -> parent, built from the lineages. feeds the auto definitions.
 const CLADE_PARENT = {};
 const CLADE_CHILDREN = {};
 const CLADE_SET = new Set();
@@ -335,8 +304,7 @@ function exampleGenera(cladeName, count) {
   return out;
 }
 
-// Returns a definition string for a clade name, or null if the name isn't
-// a clade at all (e.g. it's a genus leaf, not an internal taxonomy node).
+// definition text for a clade, or null if the name is a genus
 function cladeDefinition(name) {
   if (CLADE_DEFS[name]) return CLADE_DEFS[name];
   if (!CLADE_SET.has(name)) return null;
@@ -358,32 +326,21 @@ function cladeDefinition(name) {
 
 function showCladeInfo(name) {
   const def = cladeDefinition(name);
-  if (!def) return; // genus leaf, not a clade — nothing to show
+  if (!def) return; // genus, nothing to show
   document.getElementById('clade-title').textContent = name;
   document.getElementById('clade-text').innerHTML = linkifyGenera(def);
   document.getElementById('clade-overlay').classList.add('show');
 }
 
-// Every genus name mentioned in a clade definition is a real genus from
-// TAXA, so we link ALL of them to totaldino.com/dino/<slug> unconditionally
-// — no curated list to maintain. There's no reliable way for this game
-// (hosted on GitHub Pages) to check at runtime whether a given
-// totaldino.com page actually exists yet: that would require a
-// cross-origin fetch, and Wix doesn't send the CORS headers needed for a
-// browser to read the response. So a link here may occasionally 404 if
-// the page hasn't been written yet — it'll start working the moment it is.
+// every genus in a definition links to totaldino.com/dino/<slug>. we can't check whether the page exists
+// (Wix sends no CORS headers), so a link can 404 until the page is up.
 const ALL_GENUS_NAMES = TAXA.map(t => t.name);
 const GENUS_SET = new Set(ALL_GENUS_NAMES);
 
-// Most totaldino.com genus pages use the plain lowercase genus name as the
-// URL slug, but a few use a longer species-qualified slug instead (e.g. to
-// disambiguate or match how the page was originally published). Add an
-// entry here whenever a genus's actual URL doesn't match its lowercase name.
+// most pages use the lowercase genus name as the slug. a few need a longer one, list those here.
 const DINO_SLUG_OVERRIDES = { "Zuul": "zuulcrurivastator" };
 
-// Single source of truth for building a totaldino.com/dino/ URL from a
-// genus name — every caller goes through here so a slug override (like
-// Zuul's above) only ever needs to be added in one place.
+// builds a totaldino.com/dino/ url. use this everywhere so slug overrides live in one place.
 function dinoUrl(name) {
   const slug = DINO_SLUG_OVERRIDES[name] || name.toLowerCase().replace(/ /g, '-');
   return 'https://www.totaldino.com/dino/' + slug;
@@ -402,29 +359,23 @@ function hideCladeInfo() {
   document.getElementById('clade-overlay').classList.remove('show');
 }
 
-// Birds — a light easter egg. Guessable by common name only (not shown in
-// the autocomplete dropdown), never a possible daily answer. All share one
-// lineage ending in Aves, which is the sole derived clade within Ornithurae
-// (everything else there is flattened stem/fossil birds — see the taxonomy
-// cleanup). Kept to species I'm confident identifying correctly by common
-// name; not an attempt at exhaustive coverage.
-const BIRD_LINEAGE_BASE = BY_NAME['gallus'].lineage.slice(0, -1).concat('Aves'); // derived, so it can't drift from the taxonomy
+// birds: easter egg. guess by common name only, not in the dropdown, never a daily answer.
+// they all share one lineage ending in Aves. not a complete list.
+const BIRD_LINEAGE_BASE = BY_NAME['gallus'].lineage.slice(0, -1).concat('Aves'); // derived from Gallus so it stays in sync
 const BIRD_NAMES = ["House Sparrow", "American Robin", "European Robin", "Blue Jay", "Northern Cardinal", "European Starling", "House Finch", "American Goldfinch", "Black-capped Chickadee", "Barn Swallow", "Common Blackbird", "House Wren", "Song Sparrow", "Northern Mockingbird", "Common Raven", "American Crow", "Eurasian Magpie", "Common Chaffinch", "Great Tit", "Blue Tit", "Eurasian Jay", "European Bee-eater", "Common Swift", "Chimney Swift", "Barn Owl", "Great Horned Owl", "Snowy Owl", "Eastern Screech Owl", "Great Grey Owl", "Burrowing Owl", "Bald Eagle", "Golden Eagle", "Harpy Eagle", "Red-tailed Hawk", "Peregrine Falcon", "Osprey", "Turkey Vulture", "California Condor", "Andean Condor", "Secretarybird", "Mallard", "Canada Goose", "Snow Goose", "Mute Swan", "Trumpeter Swan", "Wood Duck", "Common Merganser", "American White Pelican", "Brown Pelican", "Great Blue Heron", "Great Egret", "Snowy Egret", "Wood Stork", "Sandhill Crane", "Whooping Crane", "American Flamingo", "Greater Flamingo", "Emperor Penguin", "King Penguin", "Adelie Penguin", "Gentoo Penguin", "Atlantic Puffin", "Common Loon", "Northern Gannet", "Double-crested Cormorant", "Wandering Albatross", "Laysan Albatross", "Magnificent Frigatebird", "Blue-footed Booby", "Shoebill", "Wild Turkey", "Ring-necked Pheasant", "Northern Bobwhite", "Greater Sage-Grouse", "Ruby-throated Hummingbird", "Anna's Hummingbird", "Rufous Hummingbird", "African Grey Parrot", "Scarlet Macaw", "Budgerigar", "Cockatiel", "Sulphur-crested Cockatoo", "Kakapo", "Kea", "Rock Pigeon", "Mourning Dove", "Passenger Pigeon", "Dodo", "Ostrich", "Emu", "Southern Cassowary", "Greater Rhea", "Common Kiwi", "Downy Woodpecker", "Pileated Woodpecker", "Northern Flicker", "Ivory-billed Woodpecker", "American Woodcock", "Killdeer", "Wilson's Snipe", "Rock Ptarmigan", "Greater Roadrunner", "Belted Kingfisher", "Common Kingfisher", "Hoopoe", "Toco Toucan", "Keel-billed Toucan", "Resplendent Quetzal", "Great Hornbill", "Laughing Kookaburra", "Superb Lyrebird", "Village Weaver", "Common Ostrich", "Common Cuckoo", "Whip-poor-will", "Common Nighthawk", "American Kestrel", "Cooper's Hawk", "Sharp-shinned Hawk", "Red-shouldered Hawk", "Swainson's Hawk", "Ferruginous Hawk", "Rough-legged Hawk", "Northern Goshawk", "Merlin", "Gyrfalcon", "American White Ibis", "Glossy Ibis", "Roseate Spoonbill", "Black-crowned Night Heron", "Green Heron", "Tricolored Heron", "Little Blue Heron", "Cattle Egret", "American Bittern", "Anhinga", "Pied-billed Grebe", "Western Grebe", "Horned Grebe", "American Coot", "Common Moorhen", "Purple Gallinule", "Ring-billed Gull", "Herring Gull", "Laughing Gull", "Great Black-backed Gull", "Arctic Tern", "Common Tern", "Black Skimmer", "Wilson's Plover", "Semipalmated Plover", "American Avocet", "Black-necked Stilt", "Long-billed Curlew", "Marbled Godwit", "Ruddy Turnstone", "Sanderling", "Willet", "Spotted Sandpiper", "Greater Yellowlegs", "Whimbrel", "Red Knot", "American Dipper", "Cedar Waxwing", "Bohemian Waxwing", "Loggerhead Shrike", "Red-eyed Vireo", "Warbling Vireo", "Yellow Warbler", "Black-throated Green Warbler", "American Redstart", "Common Yellowthroat", "Ovenbird", "Scarlet Tanager", "Western Tanager", "Rose-breasted Grosbeak", "Indigo Bunting", "Painted Bunting", "Dark-eyed Junco", "White-throated Sparrow", "White-crowned Sparrow", "Chipping Sparrow", "Field Sparrow", "Fox Sparrow", "Eastern Towhee", "Spotted Towhee", "Red-winged Blackbird", "Yellow-headed Blackbird", "Brown-headed Cowbird", "Common Grackle", "Baltimore Oriole", "Bullock's Oriole", "Eastern Meadowlark", "Western Meadowlark", "Brown Creeper", "White-breasted Nuthatch", "Red-breasted Nuthatch", "Tufted Titmouse", "Carolina Chickadee", "Ruby-crowned Kinglet", "Golden-crowned Kinglet", "Blue-gray Gnatcatcher", "Eastern Bluebird", "Western Bluebird", "Wood Thrush", "Hermit Thrush", "Swainson's Thrush", "Veery", "Gray Catbird", "Brown Thrasher", "European Goldfinch", "Common Linnet", "Eurasian Bullfinch", "Eurasian Wren", "Common Redstart", "Cliff Swallow", "Tree Swallow", "Purple Martin", "Horned Lark", "American Pipit", "Snow Bunting", "Lapland Longspur", "Ring-necked Dove", "Eurasian Collared-Dove", "White-winged Dove", "Inca Dove", "Common Ground Dove", "Elf Owl", "Northern Saw-whet Owl", "Long-eared Owl", "Short-eared Owl", "Barred Owl", "Spotted Owl", "Northern Hawk Owl", "Red-tailed Black Cockatoo", "Rainbow Lorikeet", "Eclectus Parrot", "Hyacinth Macaw", "Blue-and-yellow Macaw", "Monk Parakeet", "Rose-ringed Parakeet", "Palm Cockatoo", "Superb Fairywren", "Splendid Fairywren", "Regent Bowerbird", "Satin Bowerbird", "Raggiana Bird-of-paradise", "Blue Bird-of-paradise", "King of Saxony Bird-of-paradise", "Malleefowl", "Helmeted Guineafowl", "Indian Peafowl", "Green Peafowl", "Himalayan Monal", "Great Argus", "Red Junglefowl", "Guinea Turaco", "Great Blue Turaco", "Hoatzin", "Marabou Stork", "Saddle-billed Stork", "Jabiru", "Black-necked Stork", "Grey Crowned Crane", "Demoiselle Crane", "Common Crane", "Kori Bustard", "Great Bustard", "Northern Lapwing", "Masked Lapwing", "Eurasian Oystercatcher", "American Oystercatcher", "Wandering Tattler", "Ruff", "Eurasian Woodcock", "Great Snipe", "Little Auk", "Razorbill", "Common Murre", "Tufted Puffin", "Horned Puffin", "Black-legged Kittiwake", "Ivory Gull", "Sooty Tern", "Brown Booby", "Red-footed Booby", "Peruvian Booby", "Great Frigatebird", "Red-tailed Tropicbird", "White-tailed Tropicbird", "Northern Fulmar", "Sooty Shearwater", "Manx Shearwater", "Wilson's Storm-Petrel", "Snowy Sheathbill", "South Polar Skua", "Great Skua", "Chinstrap Penguin", "Rockhopper Penguin", "Macaroni Penguin", "Little Penguin", "Yellow-eyed Penguin", "Humboldt Penguin", "African Penguin", "Galapagos Penguin", "Northern Cassowary", "Dwarf Cassowary", "Reddish Egret", "Yellow-crowned Night Heron", "Limpkin", "Sunbittern", "Kagu", "Seriema", "King Vulture", "Black Vulture", "Egyptian Vulture", "Griffon Vulture", "Bearded Vulture", "White-tailed Eagle", "Steller's Sea Eagle", "Philippine Eagle", "African Fish Eagle", "Crowned Eagle", "Martial Eagle", "Verreaux's Eagle-Owl", "Eurasian Eagle-Owl", "Tawny Owl", "Ural Owl", "Boreal Owl", "Northern Pygmy Owl", "Common Poorwill", "Lesser Nighthawk", "Chuck-will's-widow", "Ruby-topaz Hummingbird", "Sword-billed Hummingbird", "Giant Hummingbird", "Bee Hummingbird", "Violet-crowned Woodnymph", "Broad-tailed Hummingbird", "Calliope Hummingbird", "Costa's Hummingbird", "Black-chinned Hummingbird", "Malachite Kingfisher", "Blue-winged Kookaburra", "Green Bee-eater", "Rainbow Bee-eater", "Lilac-breasted Roller", "European Roller", "Eurasian Hoopoe", "Great Spotted Woodpecker", "Green Woodpecker", "Black Woodpecker", "Acorn Woodpecker", "Red-headed Woodpecker", "Red-bellied Woodpecker", "Gila Woodpecker", "Common Flicker", "Rhinoceros Hornbill", "Southern Ground Hornbill", "African Grey Hornbill", "Wrinkled Hornbill", "Wattled Jacana", "Northern Jacana", "African Jacana", "Pheasant-tailed Jacana", "Common Snipe", "Long-billed Dowitcher", "Bar-tailed Godwit", "Hudsonian Godwit", "Eurasian Curlew", "Semipalmated Sandpiper", "Least Sandpiper", "Western Sandpiper", "Dunlin", "Pectoral Sandpiper", "Buff-breasted Sandpiper", "Penguin", "Flamingo", "Pelican", "Owl", "Eagle", "Hawk", "Falcon", "Vulture", "Condor", "Kite", "Harrier", "Buzzard", "Kestrel", "Sparrow", "Finch", "Warbler", "Robin", "Cardinal", "Wren", "Thrush", "Swallow", "Chickadee", "Jay", "Crow", "Raven", "Magpie", "Starling", "Blackbird", "Grackle", "Oriole", "Meadowlark", "Nuthatch", "Titmouse", "Kinglet", "Bluebird", "Catbird", "Mockingbird", "Thrasher", "Waxwing", "Shrike", "Vireo", "Bunting", "Junco", "Towhee", "Grosbeak", "Tanager", "Lark", "Pipit", "Wagtail", "Canary", "Nightingale", "Duck", "Goose", "Swan", "Merganser", "Heron", "Egret", "Stork", "Crane", "Ibis", "Spoonbill", "Bittern", "Loon", "Grebe", "Cormorant", "Albatross", "Puffin", "Auklet", "Murre", "Gull", "Tern", "Skimmer", "Skua", "Petrel", "Shearwater", "Booby", "Frigatebird", "Tropicbird", "Fulmar", "Gannet", "Turkey", "Pheasant", "Quail", "Grouse", "Ptarmigan", "Guineafowl", "Peacock", "Peafowl", "Chicken", "Junglefowl", "Hummingbird", "Parrot", "Macaw", "Cockatoo", "Parakeet", "Lovebird", "Budgie", "Lorikeet", "Pigeon", "Dove", "Cuckoo", "Roadrunner", "Nightjar", "Nighthawk", "Swift", "Cassowary", "Rhea", "Kiwi", "Tinamou", "Woodpecker", "Flicker", "Kingfisher", "Toucan", "Hornbill", "Trogon", "Quetzal", "Bee-eater", "Roller", "Plover", "Sandpiper", "Curlew", "Godwit", "Snipe", "Avocet", "Stilt", "Oystercatcher", "Woodcock", "Turnstone", "Coot", "Moorhen", "Rail", "Gallinule", "Jacana", "Bustard", "Turaco", "Cockatoo", "Lyrebird", "Bowerbird", "Kookaburra", "Fairywren", "Bird-of-Paradise", "Weaver", "Sunbird", "Honeyeater", "Drongo", "Myna", "Nuthatch", "Treecreeper", "Dipper", "Bulbul", "Chough", "Currawong", "Butcherbird", "Fantail", "Whistler", "Flycatcher", "Cotinga", "Manakin", "Pitta"];
 
-// Autocomplete — custom dropdown anchored under the input (native <datalist>
-// suggestions on mobile render attached to the keyboard, which eats screen
-// space; this keeps suggestions right under the guess box instead).
+// custom dropdown under the input (a native datalist on mobile sits on the keyboard and eats screen space)
 const AVES_TAXON = { name: "Aves", lineage: BIRD_LINEAGE_BASE };
 for (const b of BIRD_NAMES) BY_NAME[b.toLowerCase()] = AVES_TAXON;
 const ALL_NAMES = TAXA.map(t => t.name).sort((a,b) => a.localeCompare(b));
 const ALL_LOWER = ALL_NAMES.map(n => n.toLowerCase());
 
-// ── Nicknames & misspellings ─────────────────────────────────
-// Typing "trex", "T-Rex" or "T. rex" (punctuation and spaces are ignored) finds Tyrannosaurus; the dropdown always shows the real
-// genus name. Slips like "tyranosaurus" are caught by a fuzzy match. Add nicknames here as  key (lowercase, letters/digits only): 'Genus'.
+// --- nicknames and misspellings ---
+// "trex", "T-Rex" and "T. rex" all find Tyrannosaurus (punctuation and spaces are ignored). typos go through a fuzzy match.
+// add nicknames as lowercase letters/digits key: 'Genus'.
 const ALIASES = {"trex":"Tyrannosaurus","tyrannosaurusrex":"Tyrannosaurus","tyrannosaur":"Tyrannosaurus","tyranno":"Tyrannosaurus","trike":"Triceratops","raptor":"Velociraptor","stego":"Stegosaurus","ankylo":"Ankylosaurus","diplo":"Diplodocus","brachio":"Brachiosaurus","allo":"Allosaurus","spino":"Spinosaurus","giga":"Giganotosaurus","carno":"Carnotaurus","dilo":"Dilophosaurus","parasaur":"Parasaurolophus","pachy":"Pachycephalosaurus","compy":"Compsognathus","cerato":"Ceratosaurus","deino":"Deinonychus","argentino":"Argentinosaurus","tarbo":"Tarbosaurus","coelo":"Coelophysis","proto":"Protoceratops","apato":"Apatosaurus"};
 const normName = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-function editDist(a, b, max) { // Damerau-Levenshtein, giving up early once it must exceed max
+function editDist(a, b, max) { // edit distance with swaps, bails early once past max
   if (Math.abs(a.length - b.length) > max) return max + 1;
   let prev2 = null, prev = Array.from({ length: b.length + 1 }, (_, j) => j);
   for (let i = 1; i <= a.length; i++) {
@@ -439,12 +390,12 @@ function editDist(a, b, max) { // Damerau-Levenshtein, giving up early once it m
   }
   return prev[b.length];
 }
-function fuzzy(q, max) { // closest real genera within `max` typos, best first
+function fuzzy(q, max) { // closest genera within max typos, best first
   const out = [];
   for (let i = 0; i < ALL_NAMES.length; i++) { const d = editDist(q, ALL_LOWER[i], max); if (d <= max) out.push({ n: ALL_NAMES[i], d }); }
   return out.sort((x, y) => x.d - y.d || x.n.localeCompare(y.n));
 }
-function nameMatches(query, limit) { // up to `limit` real genus names for the dropdown
+function nameMatches(query, limit) { // up to limit genus names for the dropdown
   const q = normName(query); if (!q) return [];
   const taken = new Set(S.guesses.map(g => g.name)), out = [];
   const add = n => { if (n && !taken.has(n) && !out.includes(n)) out.push(n); };
@@ -455,7 +406,7 @@ function nameMatches(query, limit) { // up to `limit` real genus names for the d
   if (out.length < limit && q.length >= 5) fuzzy(q, q.length <= 7 ? 1 : q.length <= 11 ? 2 : 3).forEach(f => add(f.n));
   return out.slice(0, limit);
 }
-function resolveGuess(raw) { // what Enter submits: exact name, nickname, a unique prefix, or one clear best typo-match; else null
+function resolveGuess(raw) { // what Enter submits: exact name, nickname, unique prefix or one clear typo match, else null
   const direct = BY_NAME[raw.trim().toLowerCase()]; if (direct) return direct;
   const q = normName(raw); if (q.length < 2) return null;
   if (ALIASES[q]) return BY_NAME[ALIASES[q].toLowerCase()];
@@ -468,10 +419,10 @@ function resolveGuess(raw) { // what Enter submits: exact name, nickname, a uniq
   return null;
 }
 
-// ── Popularity counts: when a game ends, add its guesses to today's tally (see stats.html) ──
-// One write per finished game (a single document per day, so it stays cheap). "first" = the opening guess, the best sign of
-// which dinos people already know, since nothing has influenced it yet; "all" = every guess.
-function playerId() { // random anonymous id kept in this browser only (a person on two devices counts twice)
+// --- popularity counts ---
+// when a game ends, add its guesses to today's doc (see stats.html). one write per game.
+// "first" = opening guess (best sign of which dinos people know), "all" = every guess.
+function playerId() { // random id kept in this browser only, so one person on two devices counts twice
   try {
     let id = localStorage.getItem('dinotree_pid');
     if (!id) { id = Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join(''); localStorage.setItem('dinotree_pid', id); }
@@ -485,7 +436,7 @@ function recordGame() {
   getDb().then(db => {
     const inc = () => firebase.firestore.FieldValue.increment(1), all = {};
     names.forEach(n => { all[n] = inc(); });
-    const pid = playerId(); // second tiny write: lets stats.html count how many different people play
+    const pid = playerId(); // second small write so stats.html can count players
     return Promise.all([
       db.collection('guessStats').doc(todayStr()).set({ games: inc(), first: { [names[0]]: inc() }, all }, { merge: true }),
       pid ? db.collection('players').doc(pid).set({ last: todayStr(), games: inc() }, { merge: true }) : null
@@ -493,7 +444,7 @@ function recordGame() {
   }).catch(() => {});
 }
 
-// ── Not-found guesses: counted anonymously so you can see which dinos players try that the game lacks ──
+// --- guesses nothing matched, counted so you can see what's missing ---
 const missedSeen = new Set();
 function logMissed(raw) {
   const term = raw.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim().slice(0, 30);
@@ -503,7 +454,7 @@ function logMissed(raw) {
 }
 const suggBox = document.getElementById('suggestions');
 let suggItems = [];
-let highlightedIdx = -1; // -1 = nothing highlighted; arrow keys move this on desktop
+let highlightedIdx = -1; // -1 = none highlighted
 
 function hideSuggestions() {
   suggBox.classList.remove('show');
@@ -529,29 +480,25 @@ function showSuggestions(query) {
 
 const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-// ── State ────────────────────────────────────────────────────
+// --- state ---
 const S = { target:null, guesses:[], revealed:0, hints:0, won:false, over:false, hintNodes:new Set() };
-let drawnNodes = null; // tracks which nodes have already been rendered (for animation)
-let prevPositions = null; // name -> {x,y,w,h,font} from the last render, for the reposition/resize tween
-let prevVW = null, prevVH = null; // the SVG's own last dimensions — tweened too, so the canvas doesn't snap-resize underneath the smooth node animation
-let activeTweenFinish = null; // if a tween is still running when a new guess comes in, snap it to completion first — otherwise "old" position data would reflect an unfinished animation's target, not what's actually on screen
-let renderGen = 0; // bumped every renderTree() call; any animation frame from an older render aborts immediately, preventing two overlapping tweens from ever both touching the DOM
+let drawnNodes = null; // nodes already drawn (for the animation)
+let prevPositions = null; // name -> x,y,w,h,font from the last render, for the tween
+let prevVW = null, prevVH = null; // last svg size, tweened too
+let activeTweenFinish = null; // if a tween is still running when a guess comes in, finish it first so the old positions are accurate
+let renderGen = 0; // bumped every render, older animation frames bail out
 
 
-// Central Time (America/Chicago) rather than UTC, so the daily dino and
-// the high scores both reset at midnight CT regardless of where a player
-// is - the "America/Chicago" zone handles the CST/CDT switch on its own.
+// Central time so the daily dino and the high scores both roll over at midnight CT for everyone.
+// America/Chicago handles CST/CDT by itself.
 function todayStr() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
   const get = type => parts.find(p => p.type === type).value;
   return get('year') + '-' + get('month') + '-' + get('day');
 }
 
-// ── HIGH SCORES CONFIG ───────────────────────────────────────────
-// Fill these in with your own Firebase project's keys (Firebase console →
-// Project settings → your web app's config) to turn high scores on.
-// Until you do, the BOARD button still works, it'll just say the board
-// isn't configured yet instead of erroring out.
+// --- high scores config ---
+// your Firebase keys go here. without them the board button says "not configured" instead of erroring.
 const firebaseConfig = {
   apiKey: "AIzaSyBsHCrTIdtnZ7hYwA98Xn-7r9LeM-GTjKg",
   authDomain: "dinotree-leaderboard.firebaseapp.com",
@@ -560,7 +507,7 @@ const firebaseConfig = {
   messagingSenderId: "457914985041",
   appId: "1:457914985041:web:0b57a0d40238219512a670"
 };
-// Firebase (~100KB+) is only downloaded when the board is opened or a win is being recorded.
+// firebase is ~100KB, so only load it when the board opens or a win is saved
 let dbPromise = null;
 function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); }); }
 function getDb() {
@@ -573,17 +520,10 @@ function getDb() {
   return dbPromise;
 }
 
-// ── HIGH SCORES ───────────────────────────────────────────────────
-// A public daily high scores list. Entries are keyed by date, so yesterday's
-// board simply stops being shown once the date rolls over - nothing
-// needs to be deleted or reset by hand. Only real wins are eligible
-// (never a give-up).
-// A short, deliberately non-exhaustive blocklist - just enough to keep
-// the obvious cases off a board anyone can see. Matched as a substring
-// anywhere in the name (case-insensitive), not just an exact match, since
-// names can now be up to 10 characters rather than exactly 3.
-// Names are checked word by word (spaces/punctuation split words), so "Tony ass" is caught while Bass, Class, Knight, Nigel pass.
-// BLOCK_WORDS must match a whole word; BLOCK_SUBSTR (longer, rarely innocent) matches inside any word. Edit these lists freely.
+// --- high scores ---
+// public daily list. entries are keyed by date so yesterday's board just stops showing, nothing to reset. wins only.
+// name filter: a short blocklist checked word by word ("Tony ass" is caught, Bass and Class pass).
+// BLOCK_WORDS has to match a whole word, BLOCK_SUBSTR matches inside any word. edit freely.
 const BLOCK_WORDS = new Set(['ASS','FAG','FUK','FUC','CUM','SEX','GAY','NIG','KKK','RAP','TIT','DIK','COK','SHT','PIS','CNT','ARSE','TITS','DICK','COCK','PENIS','VAGINA','ANUS','PORN','RAPE','NAZI']);
 const BLOCK_SUBSTR = ['FUCK','SHIT','CUNT','NIGG','FAGG','BITCH','PUSSY','SLUT','WHORE','ASSHOLE'];
 const LEET = { '@': 'A', '4': 'A', '$': 'S', '5': 'S', '0': 'O', '1': 'I', '!': 'I', '3': 'E' }; // a$$ -> ass
@@ -594,7 +534,7 @@ function isBlockedInitials(name) {
 
 function alreadySubmittedToday() {
   try { return localStorage.getItem('dinotree_submitted') === todayStr(); }
-  catch (err) { return false; } // e.g. private-browsing modes that block storage
+  catch (err) { return false; } // e.g. private browsing blocks storage
 }
 function markSubmittedToday() {
   try { localStorage.setItem('dinotree_submitted', todayStr()); } catch (err) {}
@@ -606,9 +546,7 @@ function showBoard(withEntry) {
   const already = withEntry && alreadySubmittedToday();
   document.getElementById('board-entry').style.display = (withEntry && !already) ? 'flex' : 'none';
   document.getElementById('board-already').style.display = already ? 'block' : 'none';
-  // Reset per-open state: the success/error messages and the submit
-  // button's disabled state are only meaningful for the entry attempt
-  // that produced them, not for whatever the board looked like last time.
+  // reset the messages and button state each time the board opens
   document.getElementById('board-success').style.display = 'none';
   document.getElementById('board-error').style.display = 'none';
   const submitBtn = document.getElementById('board-submit-btn');
@@ -627,13 +565,8 @@ async function submitScore() {
   const btn = document.getElementById('board-submit-btn');
   const el = document.getElementById('board-initials');
   const errEl = document.getElementById('board-error');
-  // Guard against duplicate entries two ways: (1) if a submission for
-  // today already went through (e.g. a stale/reopened dialog), refuse
-  // outright; (2) disable the button synchronously, before the await
-  // below, so a rapid double-click can't fire a second submitScore()
-  // call while the first is still in flight - a disabled button doesn't
-  // dispatch click events, which is what was letting someone add as many
-  // scores as they wanted by clicking quickly.
+  // stop double entries: refuse if today's score already went in, and disable the button before the await
+  // so a fast double click can't submit twice (a disabled button doesn't fire click events).
   if (btn.disabled) return;
   if (alreadySubmittedToday()) {
     document.getElementById('board-entry').style.display = 'none';
@@ -659,20 +592,14 @@ async function submitScore() {
     });
     markSubmittedToday();
     document.getElementById('board-entry').style.display = 'none';
-    // Distinct from #board-already: that message is the "you can't do this
-    // again" gate shown when reopening the dialog after already having
-    // submitted. This one confirms the submission that was JUST made, so
-    // a first-time entrant doesn't see "you've ALREADY added a score"
-    // about the score they're only just now adding.
+    // shown right after a successful submit. not the same as #board-already, which is the gate when reopening the dialog.
     document.getElementById('board-success').style.display = 'block';
     loadHighScores();
   } catch (err) {
     btn.disabled = false;
     el.disabled = false;
     console.error('High scores submit failed:', err);
-    // Surface the failure instead of silently swallowing it - a
-    // permission-denied error (default Firestore security rules) is the
-    // most common cause and looks identical to "nothing happened" otherwise.
+    // show the failure. a permission-denied from the Firestore rules is the usual cause and otherwise looks like nothing happened.
     errEl.textContent = (err && err.code === 'permission-denied')
       ? "Couldn't save your score - the high scores database rules are blocking writes."
       : "Couldn't save your score. Please try again.";
@@ -681,8 +608,8 @@ async function submitScore() {
 }
 
 const scoreOf = r => Number.isFinite(r.score) ? r.score : (Number(r.guesses) || 0) + (Number(r.hints) || 0);
-// Top 10 only, sorted server-side. Needs a composite index (date, score, hints); until it exists the
-// console shows a one-click create link and we fall back to the old read-everything approach.
+// top 10 only, sorted by the server. needs a composite index (date, score, hints). until it exists
+// the console prints a create link and we fall back to reading everything.
 async function fetchTodayScores() {
   const db = await getDb();
   const base = db.collection('scores').where('date', '==', todayStr());
@@ -696,22 +623,22 @@ async function fetchTodayScores() {
 }
 async function loadHighScores() {
   const listEl = document.getElementById('board-list');
-  listEl.textContent = 'Loading…';
+  listEl.textContent = 'Loading...';
   try {
     const rows = (await fetchTodayScores()).sort((a, b) => (scoreOf(a) - scoreOf(b)) || ((a.hints | 0) - (b.hints | 0)));
     if (rows.length === 0) { listEl.textContent = 'Nobody yet today - Be the first!'; return; }
     listEl.innerHTML = rows.slice(0, 10).map((r, i) => {
-      const sk = Number(r.streak) | 0; // older entries don't have one
+      const sk = Number(r.streak) | 0; // older entries have none
       const detail = sk > 0 ? 'Current streak: ' + sk + (sk === 1 ? ' day' : ' days') : 'No streak recorded';
       return '<div class="board-row"><span class="board-rank">' + (i+1) + '.</span> ' +
         '<span class="board-initials" title="Tap to see their streak">' + escHtml(String(r.initials).slice(0, 10)) + '</span> - ' +
         formatGuessHintPhrase(Number(r.guesses) | 0, Number(r.hints) | 0) + '</div><div class="board-detail">' + detail + '</div>';
     }).join('');
-    listEl.onclick = e => { // tap a name to show / hide that player's streak
+    listEl.onclick = e => { // tap a name to toggle that player's streak
       const n = e.target.closest('.board-initials'), d = n && n.parentNode.nextElementSibling;
       if (!d || !d.classList.contains('board-detail')) return;
       const wasOpen = d.classList.contains('show');
-      listEl.querySelectorAll('.board-detail.show').forEach(x => x.classList.remove('show')); // close whichever was open
+      listEl.querySelectorAll('.board-detail.show').forEach(x => x.classList.remove('show')); // close whichever one was open
       if (!wasOpen) d.classList.add('show');
     };
   } catch (err) {
@@ -720,60 +647,33 @@ async function loadHighScores() {
   }
 }
 
-// #tree-wrap fills the entire #app area (so the tree can scroll behind
-// the topbar); this keeps its top padding in sync with the topbar's
-// actual rendered height so the initial (unscrolled) view still starts
-// just below the search bar / hint / give-up buttons.
+// #tree-wrap fills the whole app so the tree can scroll behind the topbar. keep its top padding equal to the topbar height.
 function positionTreeWrap() {
   const topbarEl = document.getElementById('topbar');
   const treeWrapEl = document.getElementById('tree-wrap');
-  // Desktop's topbar is one row (search bar + buttons together) and so is
-  // noticeably shorter than mobile's two-row layout; the same flat extra
-  // gap reads as less breathing room on the shorter bar, so desktop gets
-  // a bigger one to match how far below the buttons the root node sits
-  // on mobile.
+  // desktop's topbar is one short row, so it needs a bigger gap than the two-row mobile one to match.
   const extraGap = window.matchMedia('(pointer: fine)').matches ? 32 : 16;
   treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + extraGap) + 'px';
 }
 
-// Tells the parent page (totaldino.com/dinotree, embedding this via
-// Wix's "Embed a Site" iframe) the precise instant the search input
-// gains or loses focus, so the parent can freeze/restore its own
-// scroll position around the keyboard opening — see the touchend and
-// blur handlers below for where this actually gets called. Silently
-// does nothing if this file is ever opened outside that iframe.
+// tells the parent page (the Wix iframe host) when the search box gains or loses focus, so it can hold its scroll
+// while the keyboard opens. does nothing if this file is opened outside the iframe.
 function notifyDinotreeKeyboard(open) {
   try {
     window.parent.postMessage({ source: 'dinotree', keyboardOpen: open }, '*');
   } catch (e) {}
 }
 
-// Tells the parent page to snap the game into its docked position under
-// the title, for interactions that change what's on screen (a hint
-// reveals a new tree node; opening the high-scores board) but don't
-// involve the keyboard, so notifyDinotreeKeyboard() above never fires for
-// them. Silently does nothing if this file is ever opened outside the
-// Wix iframe, or on the parent's desktop layout (it just ignores the
-// message there).
+// tells the parent to dock the game under the title for things that change the screen without the keyboard
+// (a hint, opening the high scores). does nothing outside the Wix iframe.
 function notifyDinotreeDock() {
   try {
     window.parent.postMessage({ source: 'dinotree', requestDock: true }, '*');
   } catch (e) {}
 }
 
-// Forwards raw touch-drag info to the parent page so IT can apply a swipe
-// resistance effect when the game is docked full-screen and someone tries
-// to swipe down (to scroll up and see the "how it works" text above) - the
-// parent has no way to see touches happening inside this iframe on its
-// own, since it's a separate embedded page.
-//
-// This file never decides on its own whether to intercept a swipe - it
-// waits for the parent to say so (dockArm), because only the parent knows
-// whether resistance is actually needed right now. Until told otherwise,
-// or once the parent says the resistance is done (dockRelease) for this
-// same swipe, the browser's own native scrolling is left completely
-// alone - which is what gives it real momentum/inertia instead of a
-// jerky, manually-driven feel.
+// forwards touch drags to the parent so it can add resistance when the docked game is swiped down.
+// the parent decides (dockArm). until it says so, or says dockRelease, native scrolling is left alone, which keeps the momentum.
 let dockTouchStartY = null;
 let dockArmedByHost = false;
 function notifyDinotreeDockTouch(phase, y) {
@@ -790,7 +690,7 @@ window.addEventListener('message', function (e) {
 document.addEventListener('touchstart', function (e) {
   if (!e.touches.length) return;
   dockTouchStartY = e.touches[0].clientY;
-  dockArmedByHost = false; // reset until the parent replies for this swipe
+  dockArmedByHost = false; // reset until the parent replies
   notifyDinotreeDockTouch('start', dockTouchStartY);
 }, { passive: true });
 document.addEventListener('touchmove', function (e) {
@@ -810,11 +710,10 @@ document.addEventListener('touchcancel', function () {
   notifyDinotreeDockTouch('end', 0);
 }, { passive: true });
 
-// ── DAILY SCHEDULE ───────────────────────────────────────────
-// The first 7 days (Oct 1-7, 2026) are a fixed, already-published list. After that the game builds endless "rounds": every
-// dino in the pool exactly once, in a shuffled order, then a new shuffle, and so on. A dino can't come back within ~2 weeks, even
-// across the seam between rounds. New dinos you add to the pool are included automatically. (Adding dinos mid-round reshuffles
-// the rest of that round once, on the day you publish the update.)
+// --- daily schedule ---
+// first 7 days (Oct 1-7, 2026) are a fixed list. after that it runs rounds: every dino in the pool once, shuffled,
+// then a new shuffle. nothing repeats within ~2 weeks, even across rounds. new dinos join automatically
+// (adding one mid-round reshuffles the rest of that round once).
 const SCHEDULE_START = '2026-10-01';
 const DAILY_SCHEDULE = ["Stegoceras","Triceratops","Hypsilophodon","Protoceratops","Deinonychus","Stegosaurus","Brontosaurus"];
 function dayNumber(dateStr) {
@@ -824,12 +723,12 @@ function dayNumber(dateStr) {
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function strSeed(s) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
 const roundCache = {};
-function roundOrder(c, names) { // round c = 0,1,2...: the whole pool shuffled, with the previous round's last 14 kept out of its first 14
+function roundOrder(c, names) { // round c: whole pool shuffled, last 14 of the previous round kept out of the first 14
   const key = c + ':' + names.length; if (roundCache[key]) return roundCache[key];
   const prevTail = new Set((c === 0 ? DAILY_SCHEDULE : roundOrder(c - 1, names)).slice(-14));
   const rnd = mulberry32(strSeed('dinotree-round-' + c)), order = names.slice();
   for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-  for (let i = 0, j = 14; i < Math.min(14, order.length); i++) if (prevTail.has(order[i])) { // swap any recent dino out of the first 14 days
+  for (let i = 0, j = 14; i < Math.min(14, order.length); i++) if (prevTail.has(order[i])) { // swap recent dinos out of the first 14 days
     while (j < order.length && prevTail.has(order[j])) j++;
     if (j >= order.length) break; [order[i], order[j]] = [order[j], order[i]]; j++;
   }
@@ -842,7 +741,7 @@ function pickTarget(dateStr) {
   return BY_NAME[roundOrder(Math.floor(m / names.length), names)[m % names.length].toLowerCase()];
 }
 
-// ── SAVED PROGRESS (survives refresh; one save, replaced daily) ──
+// --- saved progress ---
 function saveProgress() {
   if (S.practice) return;
   try { localStorage.setItem('dinotree_state', JSON.stringify({ date: todayStr(), target: S.target.name, guesses: S.guesses.map(g => g.name), hints: S.hints, hintNodes: [...S.hintNodes], revealed: S.revealed, won: S.won, over: S.over })); } catch (e) {}
@@ -864,7 +763,7 @@ function restoreProgress() {
 const targetPool = () => TARGET_POOL.filter(n => TOTALDINO_PAGES.has(n)).map(n => BY_NAME[n.toLowerCase()]).filter(Boolean);
 function addDays(ds, n) { const a = ds.split('-').map(Number); return new Date(Date.UTC(a[0], a[1]-1, a[2]+n)).toISOString().slice(0, 10); }
 
-// ── STREAKS ──────────────────────────────────────────────────
+// --- streaks ---
 function loadStats() {
   try { return Object.assign({ streak: 0, best: 0, last: '' }, JSON.parse(localStorage.getItem('dinotree_stats') || '{}')); }
   catch (e) { return { streak: 0, best: 0, last: '' }; }
@@ -877,7 +776,7 @@ function recordResult(won) {
   try { localStorage.setItem('dinotree_stats', JSON.stringify(st)); } catch (e) {}
 }
 
-// ── NEXT-DINO COUNTDOWN (to midnight Central) ────────────────
+// --- countdown to midnight Central ---
 function tickNext() {
   if (document.hidden) return;
   let txt = 'A new dino is ready - reload to play!';
@@ -889,7 +788,7 @@ function tickNext() {
   document.querySelectorAll('.next-dino').forEach(el => { el.textContent = txt; });
 }
 
-// ── PRACTICE MODE: random dino, nothing saved, no streak/leaderboard ──
+// --- practice mode: random dino, nothing saved ---
 function startPractice() {
   const pool = targetPool().filter(t => t.name !== S.target.name && t.name !== S.dailyName);
   S.target = pool[Math.random() * pool.length | 0];
@@ -909,29 +808,17 @@ function init() {
     window.addEventListener('resize', positionTreeWrap);
   }
   const today = todayStr();
-  // TARGET_POOL: curated well-known genera; further restricted to only
-  // those with a confirmed totaldino.com page, so the daily answer always
-  // links back to the site itself (Wikipedia fallback stays as a safety
-  // net for wrong guesses, but the daily target never needs it).
+  // answers come from TARGET_POOL (well-known genera) limited to ones with a page, so the daily always links back to the site.
   S.target = pickTarget(today); S.dailyName = S.target.name; S.day = today;
-  // Unfinished daily -> resume it. Finished daily -> open straight into practice (no stale victory screen).
+  // unfinished daily: resume. finished daily: go straight to practice.
   if (restoreProgress() === 'done') startPractice(); else { renderTree(); updateStatus(); }
   tickNext(); setInterval(tickNext, 1000);
   const inputEl = document.getElementById('guess-input');
-  if (window.matchMedia('(pointer: coarse)').matches) inputEl.placeholder = 'Enter a dinosaur...'; // shorter on mobile so it doesn't get clipped by the narrower search bar
+  if (window.matchMedia('(pointer: coarse)').matches) inputEl.placeholder = 'Enter a dinosaur...'; // shorter on mobile so it isn't clipped by the narrow search bar
 
-  // On iOS, focusing an input nested inside an iframe makes the TOP-LEVEL
-  // page auto-scroll to bring it above the keyboard, as a native/engine-
-  // level part of handling focus — happening before any JS on the wrapper
-  // page (or here) can react to it. `preventScroll` on focus() suppresses
-  // this for the input's own document, but does not reliably suppress it
-  // for the ANCESTOR page when focus crosses an iframe boundary — that
-  // part of the browser's behavior isn't controllable from script.
-  // What we CAN control is timing: we used to tell the parent to freeze
-  // scroll on touchend, right before calling focus() — leaving it only a
-  // few milliseconds (a cross-frame message round trip) to actually get
-  // the freeze in place before the native scroll-into-view fires. Telling
-  // it on touchstart instead gives it the whole duration of the press.
+  // iOS scrolls the TOP page to show a focused input inside an iframe, before any JS can react, and preventScroll
+  // doesn't stop that across the frame boundary. what we can control is timing: tell the parent on touchstart
+  // (not touchend) so it has the whole press to freeze its scroll.
   if (window.matchMedia('(pointer: coarse)').matches) {
     let inputTapStartY = null;
     inputEl.addEventListener('touchstart', function (e) {
@@ -942,14 +829,14 @@ function init() {
     inputEl.addEventListener('touchmove', function (e) {
       if (inputTapStartY === null || !e.touches.length) return;
       if (Math.abs(e.touches[0].clientY - inputTapStartY) > 10) {
-        // this turned into a drag, not a tap - the keyboard isn't opening after all
+        // it was a drag, not a tap
         inputTapStartY = null;
         notifyDinotreeKeyboard(false);
       }
     }, { passive: true });
     inputEl.addEventListener('touchend', function (e) {
       e.preventDefault();
-      if (inputTapStartY === null) return; // already cancelled above
+      if (inputTapStartY === null) return; // cancelled above
       inputTapStartY = null;
       inputEl.focus({ preventScroll: true });
     }, { passive: false });
@@ -959,17 +846,11 @@ function init() {
   }
   function submitNow() {
     const mobile = window.matchMedia('(pointer: coarse)').matches;
-    // We tried keeping focus and toggling `readonly` to auto-hide/reopen the
-    // keyboard around the tree animation, but that isn't reliable across
-    // mobile browsers (some don't dismiss the keyboard for a readonly-but-
-    // focused input the way iOS does). Auto-reopening the keyboard without
-    // a fresh tap isn't reliably achievable at all — browsers require a
-    // direct user gesture for that. So on mobile we just blur for real and
-    // leave it closed; the next guess needs a tap on the search bar, same
-    // as before this feature was attempted.
+    // tried toggling readonly to hide/reopen the keyboard around the animation, but browsers differ and reopening
+    // needs a fresh tap anyway. so on mobile we just blur and leave it closed.
     if (mobile) inputEl.blur();
     submitGuess();
-    if (!mobile) inputEl.focus(); // desktop: stay ready for the next guess immediately
+    if (!mobile) inputEl.focus(); // desktop: ready for the next guess right away
   }
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' && suggItems.length > 0) {
@@ -988,34 +869,32 @@ function init() {
   });
   inputEl.addEventListener('input', () => showSuggestions(inputEl.value));
   inputEl.addEventListener('blur', () => { setTimeout(hideSuggestions, 150); notifyDinotreeKeyboard(false); }); // delay so a tap on a suggestion still registers
-  suggBox.addEventListener('mousedown', e => e.preventDefault()); // keep focus/keyboard open through the tap
+  suggBox.addEventListener('mousedown', e => e.preventDefault()); // keep the keyboard open through the tap
   suggBox.addEventListener('click', e => {
     const item = e.target.closest('.sugg-item');
     if (!item) return;
     inputEl.value = item.textContent;
     hideSuggestions();
-    if (window.matchMedia('(pointer: coarse)').matches) submitNow(); // mobile: tapping a suggestion submits it directly
-    else inputEl.focus(); // desktop: just fill it in, matching the arrow-keys-then-Enter flow
+    if (window.matchMedia('(pointer: coarse)').matches) submitNow(); // mobile: tapping a suggestion submits it
+    else inputEl.focus(); // desktop: just fill it in, like arrow keys then Enter
   });
   document.getElementById('overlay').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
   document.getElementById('clade-overlay').addEventListener('click', function(e){ if(e.target===this) hideCladeInfo(); });
-  // Delegated click handler for tree nodes — the SVG's innerHTML is fully
-  // replaced on every render, so a single listener on the SVG itself (which
-  // never gets swapped out) is used instead of per-node listeners.
+  // one click handler on the svg, since its innerHTML is replaced on every render
   document.getElementById('tree-svg').addEventListener('click', function(e){
     const key = e.target.getAttribute && e.target.getAttribute('data-key');
     if (key) showCladeInfo(key);
   });
 }
 
-// ── LCA ─────────────────────────────────────────────────────
+// --- LCA ---
 function findLCA(a, b) {
   let i = 0;
   while (i < a.length && i < b.length && a[i] === b[i]) i++;
   return i - 1;
 }
 
-// ── Actions ──────────────────────────────────────────────────
+// --- actions ---
 function submitGuess() {
   if (S.won || S.over) return;
   const inp = document.getElementById('guess-input');
@@ -1042,19 +921,19 @@ function giveHint() {
   notifyDinotreeDock();
   S.revealed++;
   S.hints++;
-  // Force only this specific node visible — not the whole path
+  // reveal only this node, not the whole path
   S.hintNodes.add(S.target.lineage[S.revealed]);
   saveProgress();
   renderTree(); updateStatus();
 }
 
 let giveUpTimer = null;
-function giveUpWarn(on) { // "you'll lose your streak" - daily game only, centred under the button
+function giveUpWarn(on) { // "you'll lose your streak" warning, daily game only
   const w = document.getElementById('give-up-warn'), b = document.getElementById('give-up-btn');
   if (on && !S.practice) { w.style.left = (b.offsetLeft + b.offsetWidth / 2) + 'px'; w.classList.add('show'); } else w.classList.remove('show');
 }
 function giveUp() {
-  if (S.won || S.over) { startPractice(); return; } // after finishing, this button becomes PRACTICE
+  if (S.won || S.over) { startPractice(); return; } // after finishing this button becomes PRACTICE
   const btn = document.getElementById('give-up-btn');
   if (!giveUpTimer) { btn.textContent = 'SURE?'; giveUpWarn(true); giveUpTimer = setTimeout(() => { giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false); }, 3000); return; }
   clearTimeout(giveUpTimer); giveUpTimer = null; btn.textContent = 'GIVE UP'; giveUpWarn(false);
@@ -1070,13 +949,12 @@ function updateStatus() {
   if (S.won || S.over) gb.textContent = 'PRACTICE'; else if (!giveUpTimer) gb.textContent = 'GIVE UP';
 }
 
-// ── UNIFIED TREE ─────────────────────────────────────────────
-// Builds a tree from ALL guess lineages + target revealed lineage.
-// A node is VISIBLE only if it has 2+ leaves beneath it (earned through guesses)
-// OR it is the root or a leaf itself.
+// --- unified tree ---
+// one tree from every guess lineage plus the revealed target path.
+// a node shows only if it has 2+ leaves under it, or it's the root or a leaf.
 
 function buildUnifiedTree() {
-  const nmap = new Map(); // name → node object
+  const nmap = new Map(); // name -> node
 
   function getN(name) {
     if (!nmap.has(name)) nmap.set(name, {name, ch: new Map(), isLeaf:false, isTarget:false, depth:-1, leafCount:0});
@@ -1096,15 +974,15 @@ function buildUnifiedTree() {
     if (leafIsTarget) last.isTarget = true;
   }
 
-  // Target revealed lineage ending in special marker
+  // target path, ending in the special marker
   const targetEnd = '???';
   const targetPath = [...S.target.lineage.slice(0, S.revealed + 1), targetEnd];
   addLineage(targetPath, true);
 
-  // All wrong guesses
+  // all wrong guesses
   for (const g of S.guesses) addLineage(g.lineage, false);
 
-  // Assign depths
+  // assign depths
   function setDepth(name, d) {
     const node = getN(name);
     if (node.depth === -1) node.depth = d;
@@ -1112,7 +990,7 @@ function buildUnifiedTree() {
   }
   setDepth('Dinosauria', 0);
 
-  // Count leaves per subtree
+  // count leaves per subtree
   function cLeaves(node) {
     if (node.leafCount > 0) return node.leafCount;
     if (node.isLeaf || node.ch.size === 0) { node.leafCount = 1; return 1; }
@@ -1126,8 +1004,7 @@ function buildUnifiedTree() {
   return getN('Dinosauria');
 }
 
-// Build visible tree: skip nodes with only 1 leaf (unique path segments)
-// keeping only branch points and leaves
+// keep only branch points and leaves (skip single-leaf segments)
 function buildVisible(rawRoot) {
   function hasTarget(vnode) {
     if (vnode.isTarget) return true;
@@ -1140,7 +1017,7 @@ function buildVisible(rawRoot) {
 
   function findNext(rnode) {
     if (isVis(rnode)) return build(rnode);
-    // Pass through single-child invisible nodes
+    // pass through single-child hidden nodes
     const results = [];
     for (const [,c] of rnode.ch) { const r = findNext(c); if(r) results.push(r); }
     return results.length === 0 ? null : results[0];
@@ -1152,7 +1029,7 @@ function buildVisible(rawRoot) {
       const vc = findNext(c);
       if (vc) vn.children.push(vc);
     }
-    // Sort: target path goes last (rightmost)
+    // target path goes last (rightmost)
     vn.children.sort((a,b) => {
       const at = hasTarget(a), bt = hasTarget(b);
       return at === bt ? 0 : (at ? 1 : -1);
@@ -1163,19 +1040,10 @@ function buildVisible(rawRoot) {
   return build(rawRoot);
 }
 
-// ── LAYOUT ───────────────────────────────────────────────────
-// Real collision-aware layout: every node's horizontal position is
-// resolved by checking actual rendered rectangles (and the connecting
-// lines themselves) against everything already placed, shifting right
-// only as much as truly needed to clear something. This is what
-// GUARANTEES lines never cross: siblings are always processed in order,
-// and anything placed later can never end up positioned to the left of
-// something earlier wherever they'd actually interfere — whether that's
-// two boxes overlapping, or a deep branch's own connecting line cutting
-// through an earlier branch's boxes on its way down. When two subtrees
-// truly don't interfere at all, the required shift comes out to zero on
-// its own, so branches naturally "float" into unused vertical space
-// without needing to be told to.
+// --- layout ---
+// collision-aware: each node's x is found by checking real rectangles (and connector lines) against what's
+// already placed, shifting right only as far as needed. that's what keeps lines from crossing. subtrees that
+// don't interfere get a shift of zero, so branches tuck into unused space on their own.
 
 function packCluster(wl, maxCols) {
   const n = wl.length;
@@ -1184,15 +1052,13 @@ function packCluster(wl, maxCols) {
   wl.forEach((g, i) => {
     g.col = i % cols;
     g.row = Math.floor(i / cols);
-    // Small alternating-row nudge, safely inside this cluster's own
-    // reserved columns, for a rounder silhouette.
+    // small alternating row nudge inside this cluster's columns, for a rounder shape
     g.stagger = (cols > 1 && g.row % 2 === 1) ? 0.18 : 0;
   });
   return cols;
 }
 
-// Minimum rightward shift so that every rect in `moving` clears every
-// rect in `fixed` it would otherwise overlap (with `gap` clearance).
+// smallest rightward shift that gets every rect in `moving` clear of every rect in `fixed` (with `gap`)
 function requiredShift(fixed, moving, gap) {
   let shift = 0;
   for (const f of fixed) {
@@ -1207,12 +1073,10 @@ function requiredShift(fixed, moving, gap) {
 }
 
 function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
-  const STACK_GAP = LH * 0.35; // breathing room between stacked sibling branches
+  const STACK_GAP = LH * 0.35; // space between stacked sibling branches
 
-  // Lays out `node`'s entire subtree in its own local frame (roughly
-  // centered near x=0) and returns { rects, relX } — rects covers every
-  // rectangle anywhere in this subtree, already in their final relative
-  // positions for this frame.
+  // lays out a node's subtree in its own frame (about centered on x=0). returns { rects, relX }, where rects
+  // covers everything in the subtree at its final relative position.
   function layout(node, y) {
     node.absY = y;
     if (node.children.length === 0) {
@@ -1247,11 +1111,8 @@ function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
       const sub = layout(o, startY);
       let shift = requiredShift(rects, sub.rects, gap);
       if (i > 0) {
-        // Also require the connecting line's own vertical corridor (from
-        // where this stack began down to this branch's deepest point) to
-        // stay clear of everything already drawn — this is what stops a
-        // deep stacked branch's line from visually crossing through an
-        // earlier branch's boxes.
+        // also keep the connector's vertical corridor (from where this stack starts down to its deepest point) clear
+        // of everything already drawn, so a deep branch's line can't cut through an earlier branch's boxes.
         const halfW = nw(labelOf(o)) / 2;
         const deepest = sub.rects.length ? Math.max(...sub.rects.map(r => r.y1)) : startY + NH + SGAP;
         const corridor = [{ x0: sub.relX - halfW, x1: sub.relX + halfW, y0: cy, y1: deepest }];
@@ -1272,8 +1133,7 @@ function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
     return { rects, relX };
   }
 
-  // Adds `shift` to node.lx and every descendant's lx — they were all
-  // set during the nested recursive call, in the frame that's now moving.
+  // add shift to node.lx and every descendant (they were set in the nested call, in the frame that's moving)
   function shiftSubtree(node, shift) {
     node.lx += shift;
     node.children.forEach(c => shiftSubtree(c, shift));
@@ -1288,7 +1148,7 @@ function layoutTree(root, LH, NH, SGAP, maxCols, nw, labelOf, gap) {
   });
   return { minX, maxX, maxY };
 }
-// ── RENDER ───────────────────────────────────────────────────
+// --- render ---
 function renderTree() {
   if (activeTweenFinish) { activeTweenFinish(); activeTweenFinish = null; }
   const myGen = ++renderGen;
@@ -1299,20 +1159,18 @@ function renderTree() {
   const BASE_LH       = isMobile ? 88  : 100;
   const BASE_SGAP     = 8;
   const BASE_FONT     = 16;
-  const BASE_GAP      = isMobile ? 14  : 20;   // base clearance between adjacent boxes/branches
-  const GUTTER        = isMobile ? 10  : 14;   // fixed side padding beyond the outermost box
+  const BASE_GAP      = isMobile ? 14  : 20;   // base gap between neighbouring boxes/branches
+  const GUTTER        = isMobile ? 10  : 14;   // side padding past the outermost box
   const MAX_CLUSTER_COLS = 3;
 
-  // Compression floors. Phase 1 (s: 0→1) shrinks gaps twice as fast as
-  // boxes, down to a "still comfortable" box floor (BSCALE_MID). If the
-  // tree still doesn't fit at that point, phase 2 (s: 1→2) lets boxes keep
-  // shrinking too, all the way to BSCALE_FLOOR — this is what guarantees
-  // the tree can never overflow the screen width, even in dense cases.
+  // compression floors. phase 1 (s 0..1) shrinks gaps twice as fast as boxes, down to a comfortable box floor
+  // (BSCALE_MID). if it still doesn't fit, phase 2 (s 1..2) shrinks boxes too, down to BSCALE_FLOOR, so the tree
+  // can't overflow the width.
   const GSCALE_FLOOR = 0.06;
   const BSCALE_MID   = 0.55;
   const BSCALE_FLOOR = 0.22;
 
-  // t = box tightness (0..1): trims box padding and minimum width (and, in the fit below, box height) WITHOUT touching the font size.
+  // t = box tightness (0..1): trims padding and min width (and box height in the fit below), font size untouched
   function nwAt(lbl, scale, t) { t = t || 0; return Math.max(70 - 22 * t, lbl.length * 9.5 + 26 - 14 * t) * scale; }
   function labelOf(n) { return (n.isTarget && (S.won || S.over)) ? S.target.name : n.name; }
 
@@ -1323,19 +1181,18 @@ function renderTree() {
   }
 
   const treeWrapEl = document.getElementById('tree-wrap');
-  // clientWidth includes tree-wrap's own left/right padding (28px total),
-  // which isn't usable drawing space, so subtract it back out.
+  // clientWidth includes tree-wrap's 28px of side padding, subtract it
   const availW = (treeWrapEl.clientWidth ? treeWrapEl.clientWidth - 28 : 0) || (isMobile ? 340 : 800);
 
-  // ── Fitting ──
-  // metricsAt() runs the real collision-aware layout at a trial setting and measures it.
-  //   s = gap/box compression (0..2) - as before, solved against the available WIDTH
-  //   v = level-spacing squash (VMIN..1) - flatter tree, text stays full size
-  //   k = extra uniform shrink of boxes + text (down to MINFONT) - only when squashing alone can't fit the HEIGHT
-  // The desktop iframe is height-limited (5:4), so there the tree must fit vertically too;
-  // on phones availH is Infinity (they scroll), which leaves k = v = 1 and the old behaviour.
-  const VMIN = 0.6, VTIGHT = 0.45, MINFONT = 8, MINLINE = 14; // MINLINE: on desktop, never leave less than 14px of connector line between levels
-  const vFloor = p => VMIN - (VMIN - VTIGHT) * p; // tighter boxes can sit closer together and still leave room for the connector lines
+  // --- fitting ---
+  // metricsAt() runs the real layout at a trial setting and measures it.
+  //   s = gap/box compression (0..2), solved against the width
+  //   v = level spacing squash (VMIN..1), flatter tree, text stays full size
+  //   k = extra shrink of boxes and text (down to MINFONT), only if squashing can't fit the height
+  // the desktop iframe is height limited (5:4) so it has to fit vertically too. phones scroll (availH = Infinity),
+  // which leaves k = v = 1 and the old behaviour.
+  const VMIN = 0.6, VTIGHT = 0.45, MINFONT = 8, MINLINE = 14; // desktop: always leave at least 14px of connector line between levels
+  const vFloor = p => VMIN - (VMIN - VTIGHT) * p; // tighter boxes can sit closer and still leave room for the connectors
   const hAvail = treeWrapEl.clientHeight - (parseFloat(treeWrapEl.style.paddingTop) || 0) - 8;
   const availH = (isMobile || hAvail < 120) ? Infinity : hAvail;
   function metricsAt(s, k, v, t) {
@@ -1344,7 +1201,7 @@ function renderTree() {
     const r = layoutTree(visRoot, Math.max(BASE_LH * bS * v, isMobile ? 0 : nhS + MINLINE), nhS, BASE_SGAP * bS, MAX_CLUSTER_COLS, lbl => nwAt(lbl, bS, t), labelOf, Math.max(4, BASE_GAP * p.gScale));
     return { w: (r.maxX - r.minX) + GUTTER * 2, h: r.maxY + 20 };
   }
-  function solveS(k, t) { // smallest compression whose WIDTH fits (2 = best effort)
+  function solveS(k, t) { // smallest compression whose width fits (2 = best effort)
     if (metricsAt(0, k, 1, t).w <= availW) return 0;
     if (metricsAt(2, k, 1, t).w > availW) return 2;
     let lo = 0, hi = 2;
@@ -1352,8 +1209,8 @@ function renderTree() {
     return hi;
   }
   const hAt = (t, v, k) => metricsAt(solveS(k, t), k, v, t).h;
-  // Order of resort on desktop: (1) tighten the boxes, (2) squash the level spacing, (3) shrink gaps, (4) shrink the text.
-  // Phones (availH = Infinity) skip all of this and keep the original width-only behaviour.
+  // order on desktop: tighten boxes, squash levels, shrink gaps, shrink text. phones skip this (availH = Infinity)
+  // and keep the width-only behaviour.
   let t = 0, k = 1, v = 1;
   if (!isMobile && metricsAt(0, 1, 1, 0).w > availW) {
     if (metricsAt(0, 1, 1, 1).w > availW) t = 1;
@@ -1366,7 +1223,7 @@ function renderTree() {
       let a = vFloor(t), b = 1; // least squash that fits
       for (let i = 0; i < 8; i++) { const mid = (a + b) / 2; if (metricsAt(s, 1, mid, t).h <= availH) a = mid; else b = mid; }
       v = a;
-    } else { // fully tightened and squashed, still too tall: shrink the text, but never below MINFONT
+    } else { // fully tightened and squashed and still too tall: shrink text, never below MINFONT
       t = 1; v = VTIGHT;
       const fontAt = kk => BASE_FONT * paramsFromS(solveS(kk, 1)).bScale * kk;
       let kLo = 1;
@@ -1389,12 +1246,11 @@ function renderTree() {
   const GAP  = Math.max(4, BASE_GAP * gScale);
   function nw(lbl) { return nwAt(lbl, bScale, t); }
 
-  // Final real layout pass at the chosen scale — this is what actually
-  // resolves every node's position for rendering.
+  // final layout at the chosen scale. this one sets the real positions.
   const { minX, maxX, maxY } = layoutTree(visRoot, LH, NH, SGAP, MAX_CLUSTER_COLS, nw, labelOf, GAP);
 
   const contentW = maxX - minX;
-  const sidePad = Math.max(GUTTER, (200 - contentW) / 2); // symmetric padding even when the 200px floor kicks in for tiny trees
+  const sidePad = Math.max(GUTTER, (200 - contentW) / 2); // even padding when the 200px floor kicks in for tiny trees
   const VW = contentW + sidePad * 2;
   const VH = maxY + 20;
   function px(n) { return n.lx - minX + sidePad; }
@@ -1406,13 +1262,13 @@ function renderTree() {
   const firstRender = drawnNodes === null;
   if (firstRender) drawnNodes = new Set();
 
-  const skipReposition = !firstRender && S.guesses.length <= 1; // the very first guess is a "reveal", not a reposition
+  const skipReposition = !firstRender && S.guesses.length <= 1; // the first guess is a reveal, not a reposition
   const oldPositions = skipReposition ? null : prevPositions;
   let edges = '', nodes = '';
-  let newChainIdx = 0; // increments once per new edge, in root-to-leaf order
-  const tweenNodeQueue = []; // existing nodes whose position/size changed this render
-  const tweenEdgeQueue = []; // existing edges whose endpoints (or width) changed this render
-  const newEdgeFollowQueue = []; // new edges growing from an existing (possibly still-moving) parent
+  let newChainIdx = 0; // +1 per new edge, root to leaf
+  const tweenNodeQueue = []; // existing nodes that moved or resized
+  const tweenEdgeQueue = []; // existing edges whose ends or width changed
+  const newEdgeFollowQueue = []; // new edges growing from an existing (maybe still moving) parent
 
   const leafCounts = new Map();
   (function countLeaves(n) {
@@ -1423,13 +1279,8 @@ function renderTree() {
     return s;
   })(visRoot);
   const MIN_EW = 1.6 * bScale, MAX_EW = 7 * bScale;
-  // Widths scale against a fixed reference count, not the currently-visible
-  // total — comparing to the live total would make the trunk edge (which by
-  // definition carries ~100% of whatever's revealed so far) render at max
-  // thickness from the very first guess. Comparing against a fixed number
-  // instead means every edge, including the one off Dinosauria, starts thin
-  // and thickens genuinely over the course of the game as more genera get
-  // revealed beneath it.
+  // widths scale against a fixed reference count, not the visible total. against the live total the trunk edge
+  // would be max thickness from guess one. this way every edge starts thin and thickens as more genera show up.
   const EW_REFERENCE = 12;
   function edgeWidth(n) { return MIN_EW + (MAX_EW - MIN_EW) * Math.sqrt(Math.min(1, leafCounts.get(n) / EW_REFERENCE)); }
 
@@ -1447,9 +1298,8 @@ function renderTree() {
       const edgeMoved = !edgeNew && prevSelf && prevChild;
       const curEW = edgeWidth(c);
 
-      // Render moving edges at their OLD shape/width first (no flash), then
-      // tween to the new one; brand-new edges grow in via stroke-dashoffset
-      // and just use their final width immediately.
+      // moving edges draw at their old shape first (no flash), then tween. new edges grow in with stroke-dashoffset
+      // and use their final width right away.
       const ex = edgeMoved ? prevSelf.x : x, ey = edgeMoved ? prevSelf.y : y, enh = edgeMoved ? prevSelf.h : NH;
       const ecx = edgeMoved ? prevChild.x : cx, ecy = edgeMoved ? prevChild.y : cy, ech = edgeMoved ? prevChild.h : NH;
       const ew = (edgeMoved && prevChild.ew != null) ? prevChild.ew : curEW;
@@ -1458,10 +1308,8 @@ function renderTree() {
       if (edgeMoved) {
         tweenEdgeQueue.push({ key: c.name, prevN: prevSelf, prevC: prevChild, curN: { x, y, h: NH }, curC: { x: cx, y: cy, h: NH }, prevEW: prevChild.ew != null ? prevChild.ew : curEW, curEW });
       } else if (edgeNew && prevSelf) {
-        // The parent already existed (and may itself be mid-tween) — keep
-        // this new line's origin glued to the parent's CURRENT position
-        // every frame, so it never looks detached from the box it's
-        // growing out of. The child end is brand-new, so it stays fixed.
+        // parent already existed (maybe mid-tween), so keep this line's start glued to the parent's current position
+        // every frame. the child end is new and stays fixed.
         newEdgeFollowQueue.push({ key: c.name, prevN: prevSelf, curN: { x, y, h: NH }, childX: cx, childY: cy, childH: NH });
       }
       draw(c, chainIdx);
@@ -1480,13 +1328,11 @@ function renderTree() {
     const isNew = !existedBefore;
     const anim = isNew ? ' nnew' : '';
     const nodeMoved = !isNew && prevSelf && (prevSelf.x !== x || prevSelf.y !== y || prevSelf.w !== w || prevSelf.h !== NH || prevSelf.font !== FONT);
-    // A node's own reveal is tied to the chain index of the edge that grew into it
+    // a node's reveal follows the chain index of the edge growing into it
     const nodeChainAttr = (isNew && incomingChainIdx !== null) ? ' data-chain="' + incomingChainIdx + '"' : '';
     const keyAttr = ' data-key="' + esc(n.name) + '"';
 
-    // Moving nodes render at their OLD position/size/font first (so the
-    // very first paint matches where they already were, no jump), then get
-    // tweened to the new spot right after insertion.
+    // moving nodes draw at their old position/size/font first so the first paint matches, then tween
     const rx = nodeMoved ? prevSelf.x : x, ry = nodeMoved ? prevSelf.y : y;
     const rw = nodeMoved ? prevSelf.w : w, rh = nodeMoved ? prevSelf.h : NH;
     const rf = nodeMoved ? prevSelf.font : FONT;
@@ -1499,8 +1345,7 @@ function renderTree() {
 
   draw(visRoot, null);
 
-  // Snapshot this render's positions (for the NEXT render's tween), while
-  // also tracking which nodes have been drawn before (for grow-in vs flip).
+  // snapshot positions for the next render's tween, and note which nodes have been drawn (grow-in vs move)
   const newPositions = new Map();
   function collect(n) {
     drawnNodes.add(n.name);
@@ -1516,18 +1361,16 @@ function renderTree() {
   svg.setAttribute('height', VH);
   svg.innerHTML = edges + nodes;
 
-  // Grow new edges outward from parent to child along the actual curve.
-  // Each edge waits for its parent's edge (same chain) to finish before it
-  // starts growing, so a lower clade's line never starts until the branch
-  // above it has fully drawn.
-  const EDGE_S = 0.85;   // seconds per edge segment
-  const NODE_S = 0.4;    // seconds for a node's fade-in
+  // grow new edges from parent to child along the curve. each edge waits for its parent's edge (same chain),
+  // so a lower clade's line never starts before the branch above it finishes.
+  const EDGE_S = 0.85;   // seconds per edge
+  const NODE_S = 0.4;    // seconds for a node fade-in
   svg.querySelectorAll('path.enew').forEach(path => {
     const idx = Number(path.dataset.chain);
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
-    path.getBoundingClientRect(); // force reflow so the starting state takes hold
+    path.getBoundingClientRect(); // force a reflow so the start state sticks
     path.style.transition = 'stroke-dashoffset ' + EDGE_S + 's ease';
     path.style.transitionDelay = (idx * EDGE_S) + 's';
     requestAnimationFrame(() => {
@@ -1535,7 +1378,7 @@ function renderTree() {
     });
   });
 
-  // Nodes simply fade in (no movement) right as the edge feeding them lands.
+  // nodes fade in (no movement) as the edge feeding them lands
   svg.querySelectorAll('.nnew').forEach(el => {
     const idx = el.dataset.chain !== undefined ? Number(el.dataset.chain) : 0;
     el.style.transition = 'opacity ' + NODE_S + 's ease';
@@ -1545,12 +1388,9 @@ function renderTree() {
     });
   });
 
-  // Everything that already existed before this guess smoothly slides and
-  // resizes into its new spot, instead of jumping there — this is what
-  // makes the rest of the tree settle/shrink to make room for new growth,
-  // rather than snapping. Brand-new nodes/edges are untouched by this;
-  // they still use the grow/fade-in above. (These elements were already
-  // rendered at their OLD position/shape by draw() above — no flash.)
+  // everything that already existed slides/resizes into place instead of jumping, which is how the tree
+  // makes room for new growth. new nodes and edges keep the grow/fade-in above. (draw() already rendered
+  // these at their old spot, so no flash.)
   const dimsChanged = !skipReposition && prevVW !== null && (prevVW !== VW || prevVH !== VH);
   if (tweenNodeQueue.length > 0 || tweenEdgeQueue.length > 0 || newEdgeFollowQueue.length > 0 || dimsChanged) {
     const rectByKey = {}, textByKey = {}, edgeByKey = {};
@@ -1565,9 +1405,7 @@ function renderTree() {
     const followEdges = newEdgeFollowQueue.map(fe => ({ ...fe, pathEl: edgeByKey[fe.key] }))
       .filter(fe => fe.pathEl);
 
-    // Canvas itself: if it's about to resize, start the frame from the OLD
-    // size (matching what's already on screen) and tween to the new one in
-    // lockstep with everything else, instead of snapping underneath it.
+    // the canvas starts at its old size and tweens to the new one along with everything else
     if (dimsChanged) {
       svg.setAttribute('viewBox', '0 0 ' + prevVW + ' ' + prevVH);
       svg.setAttribute('width', prevVW);
@@ -1612,7 +1450,7 @@ function renderTree() {
           te.pathEl.style.strokeWidth = ew.toFixed(2);
         });
         followEdges.forEach(fe => {
-          // Parent side tracks its own tween; child side (brand new) is fixed.
+          // parent end follows its own tween, child end (new) is fixed
           const nx = fe.prevN.x + (fe.curN.x - fe.prevN.x) * e;
           const ny = fe.prevN.y + (fe.curN.y - fe.prevN.y) * e;
           const nh = fe.prevN.h + (fe.curN.h - fe.prevN.h) * e;
@@ -1633,7 +1471,7 @@ function renderTree() {
         const raw = Math.min(1, (now - t0) / DURATION);
         apply(ease(raw));
         if (raw < 1) requestAnimationFrame(frame);
-        else activeTweenFinish = null; // completed naturally
+        else activeTweenFinish = null; // finished on its own
       }
       activeTweenFinish = () => { stopped = true; apply(1); }; // called if a new guess interrupts this tween
       requestAnimationFrame(frame);
@@ -1642,14 +1480,8 @@ function renderTree() {
 
   prevVW = VW; prevVH = VH;
 
-  // If the newly-grown part of the tree would land below what's currently
-  // visible (e.g. off-screen or under the keyboard), scroll just enough to
-  // bring the start of it into view so the growth animation is actually
-  // Always bring the start of newly-grown content near the top of the
-  // visible tree area after a guess. Simpler and more reliable than trying
-  // to precisely detect what's hidden behind the keyboard — and since the
-  // keyboard only ever covers the BOTTOM of the screen, pushing new growth
-  // toward the top guarantees it clears the keyboard too.
+  // after a guess, scroll so the start of the new growth sits near the top of the tree area. simpler than working
+  // out what the keyboard hides, and since the keyboard covers the bottom, new growth at the top clears it too.
   if (!firstRender) {
     const newYs = [];
     svg.querySelectorAll('.nnew').forEach(el => {
@@ -1659,10 +1491,7 @@ function renderTree() {
     if (newYs.length > 0) {
       const newTop = Math.min(...newYs);
       const PAD = 20;
-      // Small delay: the input was just blurred to dismiss the keyboard,
-      // and that collapse animates over a couple hundred ms — scrolling
-      // right away would still be measuring against the keyboard-up
-      // layout. Waiting lets the scroll land after things settle.
+      // wait a moment: the keyboard collapse animates for ~200ms and scrolling sooner measures the keyboard-up layout
       setTimeout(() => {
         treeWrapEl.scrollTo({ top: Math.max(0, newTop - PAD), behavior: 'smooth' });
       }, 150);
@@ -1670,15 +1499,11 @@ function renderTree() {
   }
 }
 
-// ── VICTORY ──────────────────────────────────────────────────
-// Genera confirmed to have a real totaldino.com/dino/ page (pulled from
-// the site's own /index directory). Anything not in this list falls back
-// to a Wikipedia link on the victory screen instead of a dead link.
+// --- victory ---
+// genera known to have a totaldino.com/dino/ page. anything else links to Wikipedia instead of a dead link.
 const TOTALDINO_PAGES = new Set(["Achillobator","Albertosaurus","Anchiornis","Archaeopteryx","Baryonyx","Carcharodontosaurus","Coelophysis","Cryolophosaurus","Deinonychus","Diuqin","Dromaeosaurus","Eoabelisaurus","Fujianvenator","Herrerasaurus","Imperobator","Lythronax","Megalosaurus","Meraxes","Migmanychion","Nanuqsaurus","Oviraptor","Pectinodon","Rajasaurus","Sarcosaurus","Siats","Spinosaurus","Tarbosaurus","Torvosaurus","Tyrannosaurus","Yangchuanosaurus","Acrocanthosaurus","Alxasaurus","Appalachiosaurus","Austroraptor","Buitreraptor","Citipati","Concavenator","Deinocheirus","Dilophosaurus","Dornraptor","Dryptosaurus","Eoneophron","Gigantoraptor","Hesperornis","Kuru","Majungasaurus","Megapnosaurus","Mexidracon","Nanotyrannus","Ornithomimus","Ozraptor","Protathlitis","Riojavenatrix","Shuvuuia","Sinotyrannus","Stenonychosaurus","Tawa","Tyrannomimus","Velociraptor","Yutyrannus","Aardonyx","Abrosaurus","Alamosaurus","Apatosaurus","Ardetosaurus","Astrodon","Atlasaurus","Barapasaurus","Brachiosaurus","Brachytrachelopan","Brontosaurus","Bustingorrytitan","Camarasaurus","Chucarosaurus","Diplodocus","Europasaurus","Gandititan","Garumbatitan","Igai","Inawentu","Isisaurus","Jiangxititan","Jingiella","Lingwulong","Lishulong","Lusotitan","Mamenchisaurus","Maraapunisaurus","Massospondylus","Musankwa","Patagotitan","Plateosaurus","Qianlong","Qunkasaura","Rapetosaurus","Saltasaurus","Sauroposeidon","Sidersaura","Supersaurus","Tharosaurus","Tiamat","Titanomachya","Udelartitan","Uriash","Aletopelta","Arrhinoceratops","Calvarius","Chakisaurus","Datai","Edmontosaurus","Furcatoceratops","Gideonmantellia","Gremlin","Huayangosaurus","Hypsilophodon","Iguanodon","Kentrosaurus","Lambeosaurus","Maiasaura","Mantellisaurus","Minimocursor","Muttaburrasaurus","Oblitosaurus","Oryctodromeus","Pachyrhinosaurus","Platytholus","Protoceratops","Scelidosaurus","Spinops","Stegosaurus","Stellasaurus","Tarchia","Thyreosaurus","Triceratops","Vectidromeus","Yanbeilong","Yuxisaurus","Zuul","Ampelognathus","Auroraceratops","Camptosaurus","Dacentrurus","Diabloceratops","Equijubus","Gastonia","Gonkoken","Gryposaurus","Hylaeosaurus","Iani","Jakapil","Koshisaurus","Lanzhousaurus","Malefica","Menefeeceratops","Minqaria","Nasutoceratops","Olorotitan","Pachycephalosaurus","Planicoxa","Polacanthus","Saurolophus","Spicomellus","Stegoceras","Stegouros","Talenkauen","Tethyshadros","Tlatolophus","Utahceratops","Vectipelta","Yingshanosaurus","Zalmoxes","Giganotosaurus","Hadrosaurus","Giraffatitan","Ahshislesaurus","Ahvaytum","Alpkarakush","Anteavis","Archaeocursor","Asiatyrannus","Astigmasaura","Athenar","Australovenator","Baiyinosaurus","Baminornis","Bicharracosaurus","Brontotholus","Caletodraco","Campananeyen","Cariocecus","Caudipteryx","Chadititan","Chilesaurus","Chromeornis","Cienciargentina","Coahuilasaurus","Comptonatus","Dasosaurus","Doolysaurus","Duonychus","Dzharacursor","Emiliasaura","Enigmacursor","Ferenceratops","Foskeia","Gongshuilong","Haolong","Harenadraco","Hesperonyx","Huadanosaurus","Huashanosaurus","Huaxiazhoulong","Huayracursor","Hypnovenator","Istiorachis","Jaculinykus","Jinchuanloong","Joaquinraptor","Khankhuuluu","Kiyacursor","Koleken","Kryptohadros","Kunpengornis","Limenavis","Lokiceratops","Nagatitan","Neobohaiornis","Obelignathus","Parasaurolophus","Paulodon","Pelecanimimus","Petrustitan","Phosphatotitan","Prenocephale","Ptychotherates","Pulaosaurus","Qianjiangsaurus","Rebbachisaurus","Sasayamagnomus","Styracosaurus","Taleta","Tameryraptor","Tietasaura","Tongnanlong","Uragasaurus","Vitosaura","Wudingloong","Xenovenator","Xiangyunloong","Yeneen","Yuanmouraptor","Yuanyanglong","Zavacephale","Zhengheornis"]);
 
-// "N guesses[+ H hints]" — shared by the victory subtitle, the social
-// share text, and each high-scores row so the pluralization logic only
-// lives in one place.
+// "N guesses [+ H hints]", used by the victory text, the share text and the high score rows
 function formatGuessHintPhrase(n, hints) {
   return n + ' guess' + (n!==1?'es':'') +
     (hints > 0 ? ' + ' + hints + ' hint' + (hints>1?'s':'') : '');
@@ -1686,11 +1511,8 @@ function formatGuessHintPhrase(n, hints) {
 function guessCount() { return S.guesses.length + (S.won ? 1 : 0); } // the winning guess counts
 function guessHintPhrase() { return formatGuessHintPhrase(guessCount(), S.hints); }
 
-// Some genus names ("Micropachycephalosaurus", "Bustingorrytitan") are too
-// long to fit the dialog at the CSS clamp() size and would wrap or overflow.
-// Shrinks the title below that size, one px at a time, until it fits on one
-// line (floor of MIN_TITLE_PX keeps it legible; overflow/ellipsis in the CSS
-// is the fallback if a name is ever too long even at that floor).
+// some names ("Micropachycephalosaurus", "Bustingorrytitan") are too long for the dialog title at the clamp() size.
+// shrink one px at a time until it fits on one line, down to MIN_TITLE_PX (the CSS ellipsis covers anything longer).
 const MIN_TITLE_PX = 13;
 function fitVictoryTitle() {
   const el = document.getElementById('v-title');
@@ -1702,11 +1524,7 @@ function fitVictoryTitle() {
   }
 }
 
-// The learn-more button's text ("LEARN MORE ABOUT <NAME> \u2192") is allowed
-// to wrap, but only up to 2 lines - long genus names (20+ characters) can
-// otherwise push it to 3+ lines. Shrinks the font just enough to fit
-// within 2 lines' worth of height, rather than always using the smallest
-// size up front.
+// the learn-more button can wrap to 2 lines but not 3 (20+ letter names). shrink the font only as far as needed.
 const MIN_LINK_PX = 11;
 function fitVictoryLink() {
   const el = document.getElementById('v-link');
@@ -1722,16 +1540,15 @@ function fitVictoryLink() {
   }
 }
 
-// ── VICTORY ART: small thumbnail instead of the multi-MB original ──────────────
-// Wikimedia's thumbnailer sometimes flattens PNG transparency onto opaque white (Phabricator T198370), which put white
-// boxes around the art. So: ask the Commons API for the 800px thumbnail and check its corners. If it kept its transparency,
-// use it; if it came back white-backed (or anything else goes wrong), use the full-size original, which is always clean.
-// Either way it's fetched early (after the first guess) so it's usually ready by the victory screen.
+// --- victory art ---
+// Wikimedia's thumbnailer sometimes flattens PNG transparency onto white (Phabricator T198370), which gave the art
+// white boxes. so: ask the Commons API for the 800px thumbnail and check its corners. transparent -> use it.
+// white-backed or any failure -> use the full-size original, which is always clean. fetched early (after the first guess).
 const ART_W = 800, artCache = {};
-// No list of problem dinos: every game re-checks, so if Wikimedia fixes a thumbnail it starts being used automatically.
+// no list of problem dinos. every game re-checks, so a fixed thumbnail gets used automatically
 const artOriginal = name => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(name + '_TD.png');
 function loadImg(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; }); }
-function cornersWhite(im) { // true if all four corner pixels are opaque white, i.e. the transparency was flattened
+function cornersWhite(im) { // true if all four corners are opaque white (transparency was flattened)
   const c = document.createElement('canvas'), cx = c.getContext('2d', { willReadFrequently: true }), w = im.naturalWidth, h = im.naturalHeight;
   c.width = c.height = 1;
   return [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]].every(([x, y]) => {
@@ -1739,7 +1556,7 @@ function cornersWhite(im) { // true if all four corner pixels are opaque white, 
     const d = cx.getImageData(0, 0, 1, 1).data; return d[3] > 245 && d[0] > 247 && d[1] > 247 && d[2] > 247;
   });
 }
-function prepareArt(name) { // cached promise -> URL for the <img>
+function prepareArt(name) { // cached promise of the url for the <img>
   return artCache[name] || (artCache[name] = (async () => {
     const orig = artOriginal(name); let out = orig, how;
     try {
@@ -1747,7 +1564,7 @@ function prepareArt(name) { // cached promise -> URL for the <img>
       const info = Object.values(j.query.pages)[0].imageinfo[0], thumb = info.thumburl || info.url;
       if (cornersWhite(await loadImg(thumb))) how = 'original (thumbnail was white-backed)'; else { out = thumb; how = 'thumbnail'; }
     } catch (e) { how = 'original (fallback)'; }
-    if (out === orig) new Image().src = orig; // start downloading the full-size art now so it's cached by the victory screen
+    if (out === orig) new Image().src = orig; // start the full-size download now so it's cached by the victory screen
     console.info('Dinotree art:', how, '-', name);
     return out;
   })());
@@ -1762,9 +1579,7 @@ function showVictory() {
   else subEl.textContent = S.won ? ('Found in ' + guessHintPhrase() + '.') : ('You gave up after ' + n + ' guess' + (n!==1?'es':'') + '.');
   subEl.style.color = S.won ? '' : '#ff3333';
 
-  // Paleoart — always pulls the current version directly from Commons, so
-  // updating the art there updates the game automatically. Stays hidden
-  // (no broken-image glitch) until this specific genus has art uploaded.
+  // paleoart comes straight from Commons, so updating it there updates the game. hidden until the genus has art.
   const artEl = document.getElementById('v-art');
   const artWrap = document.getElementById('v-art-wrap');
   artWrap.style.display = 'none';
@@ -1789,20 +1604,13 @@ function showVictory() {
   tickNext();
   document.getElementById('overlay').classList.add('show');
   if (S.won && !S.practice) getDb().catch(() => {}); // warm up Firebase so ADD SCORE is instant
-  // All three buttons now sit in one row and size to their own natural
-  // width (see #v-share-row/.share-btn CSS) — no matched-width logic needed.
+  // the buttons share one row and size to their text (see #v-share-row / .share-btn CSS)
 }
 
-// Spoiler-free by design: shares "I got the dino in N guesses" without
-// naming the genus, so a friend who hasn't played today isn't given the
-// answer. Always points at the canonical game URL (not window.location,
-// which can be a raw hosting/staging URL) so shares land on the real page
-// regardless of where this file happens to be running from.
-// Note on Facebook: its share dialog no longer accepts pre-filled post
-// text from a URL (a platform-wide anti-spam restriction, not something
-// fixable client-side) - what people see instead is whatever Open Graph
-// tags are on GAME_URL, so the title/description/image meta tags in
-// <head> are what actually needs to look good, not the "quote" param.
+// spoiler free on purpose: "I got the dino in N guesses" without the genus. uses the canonical GAME_URL, not
+// window.location, so shares point at the real page wherever this file runs.
+// Facebook no longer takes pre-filled text from a link, so what people see is the Open Graph tags on GAME_URL
+// (title, description, image in <head>), not the "quote" param.
 const GAME_URL = 'https://totaldino.com/dinotree';
 function shareVictory(network) {
   const text = "I got the dino in " + guessHintPhrase() + "! \ud83e\udd96";
@@ -1813,7 +1621,7 @@ function shareVictory(network) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') ['overlay','clade-overlay','board-overlay'].forEach(id => document.getElementById(id).classList.remove('show')); });
-// Desktop only: re-fit the tree if the window/iframe is resized (phones fire resize for the keyboard, so they're left alone).
+// desktop only: refit the tree when the window or iframe resizes (phones fire resize for the keyboard)
 let resizeT = null;
 window.addEventListener('resize', () => {
   if (!window.matchMedia('(pointer: fine)').matches) return;
