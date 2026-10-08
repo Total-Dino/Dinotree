@@ -31,22 +31,27 @@ if (!urls.length) { console.error('No URLs found in the sitemap, so nothing was 
 
 // 2. a url is a dino page if its last path piece is exactly a genus in the family tree
 const pathOf = u => { try { return new URL(u).pathname.split('/').filter(Boolean).map(x => decodeURIComponent(x).toLowerCase()); } catch { return []; } };
-const slugOf = u => pathOf(u).slice(-1)[0] || '';
+const slugOf = u => (pathOf(u).slice(-1)[0] || '').replace(/^_+|_+$/g, ''); // Wix short-name pages look like /dino/_fona
 const dirOf = u => '/' + pathOf(u).slice(0, -1).join('/');
 const exact = new Set(), possible = new Map(), dirVotes = {};
 for (const u of urls) {
   const slug = slugOf(u); if (!slug) continue;
-  if (byLower.has(slug)) { exact.add(byLower.get(slug)); dirVotes[dirOf(u)] = (dirVotes[dirOf(u)] || 0) + 1; continue; }
+  const g = byLower.get(slug);
+  if (g && g.length > 4) { exact.add(g); dirVotes[dirOf(u)] = (dirVotes[dirOf(u)] || 0) + 1; continue; }
+  if (g) continue; // short names are handled below, only inside the dino folder
   for (const tok of slug.split('-')) if (tok.length > 3 && byLower.has(tok)) possible.set(u, byLower.get(tok)); // reported only, never added
 }
-// Wix doesn't allow page addresses of 4 letters or fewer, so Zuul, Tawa etc. need a longer one (/zuul-something).
-// for those short names, accept a page in the same folder as the other dino pages with the name as one hyphen-separated word.
-// pages elsewhere (blog posts etc.) are ignored.
+// Wix doesn't allow page addresses of 4 letters or fewer, so short names use a leading underscore (/dino/_fona), which
+// slugOf strips. as a fallback for a longer address (/zuul-something): accept a page with the short name as one
+// hyphen-separated word. either way the page has to sit in the same folder as the other dino pages, so blog posts,
+// shop items etc. are ignored.
 const shortFound = new Map();
 const dinoDir = Object.entries(dirVotes).sort((x, y) => y[1] - x[1])[0]?.[0];
 if (dinoDir !== undefined) for (const u of urls) {
-  const slug = slugOf(u); if (!slug || byLower.has(slug) || dirOf(u) !== dinoDir) continue;
-  for (const tok of slug.split('-')) { const g = byLower.get(tok); if (g && g.length <= 4 && !shortFound.has(g)) { shortFound.set(g, u); exact.add(g); possible.delete(u); } }
+  const slug = slugOf(u); if (!slug || dirOf(u) !== dinoDir) continue;
+  const g = byLower.get(slug);
+  if (g && g.length <= 4) { exact.add(g); shortFound.set(g, u); continue; }
+  for (const tok of slug.split('-')) { const t = byLower.get(tok); if (t && t.length <= 4 && !shortFound.has(t)) { shortFound.set(t, u); exact.add(t); possible.delete(u); } }
 }
 
 // 3. add the new ones
@@ -55,7 +60,7 @@ console.log(`Sitemap URLs read: ${urls.length}`);
 console.log(`Dinosaur pages recognised (exact name match): ${exact.size}`);
 console.log(`Already on the game's page list: ${pages.length}`);
 console.log(`Added now: ${added.length ? added.join(', ') : 'none'}`);
-if (shortFound.size) console.log(`Short-named dinosaurs recognised from longer page addresses: ` + [...shortFound].map(([g, u]) => `${g} <- ${u}`).join('; '));
+if (shortFound.size) console.log(`Short-named dinosaurs recognised (underscore or longer addresses): ` + [...shortFound].map(([g, u]) => `${g} <- ${u}`).join('; '));
 if (unseen.length) console.log(`On the game's list but not found in the sitemap (${unseen.length}, left alone): ${unseen.join(', ')}`);
 if (possible.size) console.log(`Possible dinosaur pages with longer addresses (NOT added; check them):\n  ` + [...possible].map(([u, g]) => `${g}  <-  ${u}`).join('\n  '));
 if (!exact.size) console.log('No exact matches at all: your page addresses probably look different from /genus-name. Sample addresses:\n  ' + urls.slice(0, 12).join('\n  '));
