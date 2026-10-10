@@ -16,13 +16,25 @@ th[data-k].sorted::after{content:' \25BE'}
   body{padding:12px 8px} h1{font-size:19px} table{font-size:13px} th,td{padding:5px 3px}
   th:first-child,td:first-child{width:22px;padding-left:0} button{padding:5px 9px;font-size:13px}
 }
+#chart-box{margin:0 0 16px}
+#chart{width:100%;height:auto;display:block;touch-action:pan-y}
+#chart-note{color:#006600;font-size:12px;margin:4px 0 8px;min-height:15px}
+.dates{display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:#00aa00;margin-bottom:6px}
+input[type=date]{background:#000;color:#00cc00;border:1px solid #00aa00;padding:4px 6px;font:inherit;color-scheme:dark}
 </style></head><body>
 <h1>DinoTree: what players guess</h1>
 <div id="summary">Loading...</div>
+<div id="chart-box">
+<div class="bar"><button data-m="total" class="on">Total people</button><button data-m="new">New people / day</button><button data-m="games">Games / day</button></div>
+<svg id="chart" viewBox="0 0 340 230"></svg>
+<div id="chart-note">Loading...</div>
+<div class="bar"><button data-r="7">7 days</button><button data-r="30" class="on">30 days</button><button data-r="90">90 days</button><button data-r="0">All</button></div>
+<div class="dates"><input type="date" id="from"> to <input type="date" id="to"></div>
+</div>
 <div class="bar"><button data-days="0" class="on">All time</button><button data-days="30">Last 30 days</button>
 <label><input type="checkbox" id="nopage"> only dinos with no page yet</label></div>
 <div class="wrap"><table><thead><tr><th>#</th><th>Dino</th><th data-k="first" title="Games that opened with this dino">Opened</th><th data-k="share" title="Share of games that opened with it">%</th><th data-k="all" title="Every guess">All</th><th>Page</th></tr></thead><tbody id="rows"></tbody></table></div>
-<p style="color:#006600;font-size:12px">Counts only finished games. "Different people" means different browsers (someone on two devices counts twice) and only counts since this feature went live. Opened = games that began with this dino; % = share of games; All = every guess; tap a heading to sort. "Opened" is the best sign of which dinos people already know, because nothing has influenced a first guess yet.</p>
+<p style="color:#006600;font-size:12px">Counts only finished games. "Different people" means different browsers (someone on two devices counts twice) and only counts since this feature went live. Chart days are Central time. Opened = games that began with this dino; % = share of games; All = every guess; tap a heading to sort. "Opened" is the best sign of which dinos people already know, because nothing has influenced a first guess yet.</p>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
@@ -60,6 +72,74 @@ function render() {
   $('summary').textContent = games + ' finished games' + (pl ? ' by ' + pl + ' different ' + (pl === 1 ? 'person' : 'people') : '') + (n ? ' over ' + n + ' day' + (n > 1 ? 's' : '') : '') + '. Showing the top ' + Math.min(100, shown.length) + '.';
   $('rows').innerHTML = shown.slice(0, 100).map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + r.n.replace(/[<>&"]/g, '') + (r.n === 'Aves' ? ' (bird guesses)' : '') + '</td><td>' + r.first + '</td><td>' + r.share.toFixed(1) + '%</td><td>' + r.all + '</td><td class="' + (pages && !pages.has(r.n) && r.n !== 'Aves' ? 'no' : '') + '">' + (!pages || r.n === 'Aves' ? '' : pages.has(r.n) ? '&#10003;' : 'no') + '</td></tr>').join('');
 }
+// ---- growth chart ----
+let people = null, peopleErr = '', metric = 'total', chartDays = 30, custom = false;
+const FB = firebaseConfig;
+const ctDay = t => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // YYYY-MM-DD, Central time
+const shiftDay = (ds, n) => new Date(new Date(ds + 'T00:00:00Z').getTime() + n * 864e5).toISOString().slice(0, 10);
+const prettyDay = ds => new Date(ds + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+async function loadPeopleHistory() { // the REST api returns createTime (the day each player first appeared), which the SDK hides
+  const out = []; let token = '';
+  for (let i = 0; i < 50; i++) {
+    const r = await fetch('https://firestore.googleapis.com/v1/projects/' + FB.projectId + '/databases/(default)/documents/players?pageSize=300&mask.fieldPaths=games&key=' + FB.apiKey + (token ? '&pageToken=' + encodeURIComponent(token) : ''));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json(); (j.documents || []).forEach(d => out.push(ctDay(d.createTime)));
+    token = j.nextPageToken || ''; if (!token) break;
+  }
+  return out;
+}
+function series(m, from, to) { // -> { pts: [{ d, v }], dataStart }, or null if this metric has no data yet
+  const newBy = {}; (people || []).forEach(d => { newBy[d] = (newBy[d] || 0) + 1; });
+  const gamesBy = {}; days.forEach(d => { gamesBy[d.id] = d.games || 0; });
+  const ids = m === 'games' ? days.map(d => d.id) : Object.keys(newBy); if (!ids.length) return null;
+  const dataStart = ids.reduce((a, b) => a < b ? a : b), pts = []; let run = 0;
+  for (let d = dataStart, k = 0; d <= to && k < 3000; d = shiftDay(d, 1), k++) {
+    run += newBy[d] || 0;
+    if (d >= from) pts.push({ d, v: m === 'total' ? run : m === 'new' ? (newBy[d] || 0) : (gamesBy[d] || 0) });
+  }
+  return { pts, dataStart };
+}
+function niceMax(v) { if (v <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 4, 6, 8, 10].map(x => x * p).find(x => x >= v); }
+function chartRange() { // -> [from, to]
+  const today = ctDay(Date.now()); let to = today, from;
+  if (custom) { to = $('to').value || today; from = $('from').value || '0000-01-01'; }
+  else from = chartDays ? shiftDay(today, -(chartDays - 1)) : '0000-01-01';
+  return [from, to > today ? today : to];
+}
+function drawChart() {
+  const svg = $('chart'), note = $('chart-note');
+  if (!custom) { const [f, t] = chartRange(); $('to').value = t; $('from').value = f > '1000' ? f : ''; }
+  const [from, to] = chartRange(), s = series(metric, from, to);
+  const W = Math.max(280, svg.parentNode.clientWidth || 340), H = 230, L = 40, R = 12, T = 14, B = 28;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  if (metric !== 'games' && !people && peopleErr) { svg.innerHTML = ''; note.textContent = "Couldn't load the player history (" + peopleErr + ")."; return; }
+  if (!s || !s.pts.length) { svg.innerHTML = ''; note.textContent = 'No data in this range yet.'; return; }
+  const pts = s.pts, n = pts.length, top = niceMax(Math.max(...pts.map(q => q.v)));
+  const X = i => L + (n > 1 ? i / (n - 1) : .5) * (W - L - R), Y = v => H - B - v / top * (H - T - B);
+  let g = '';
+  [0, .5, 1].forEach(f => { const y = Y(top * f); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#0a2a0a"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" fill="#00aa00" font-size="11">' + (top * f) + '</text>'; });
+  const xs = n > 1 ? [0, Math.floor((n - 1) / 2), n - 1] : [0];
+  xs.forEach((i, k) => { g += '<text x="' + X(i) + '" y="' + (H - 8) + '" text-anchor="' + (n > 1 && k === 0 ? 'start' : n > 1 && k === xs.length - 1 ? 'end' : 'middle') + '" fill="#00aa00" font-size="11">' + prettyDay(pts[i].d) + '</text>'; });
+  const line = pts.map((q, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(q.v).toFixed(1)).join('');
+  g += '<path d="' + line + 'L' + X(n - 1).toFixed(1) + ',' + Y(0) + 'L' + X(0).toFixed(1) + ',' + Y(0) + 'Z" fill="rgba(0,255,0,.10)"/>';
+  g += '<path id="line" d="' + line + '" fill="none" stroke="#00ff00" stroke-width="2" stroke-linejoin="round"/>';
+  if (n <= 45) pts.forEach((q, i) => { g += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(q.v).toFixed(1) + '" r="3" fill="#00ff00"/>'; });
+  g += '<g id="tip" style="display:none"><line id="tipl" y1="' + T + '" y2="' + (H - B) + '" stroke="#006600"/><circle id="tipc" r="5" fill="#000" stroke="#ffd633" stroke-width="2"/><text id="tipt" fill="#ffd633" font-size="12" font-weight="bold"></text></g><rect id="hit" x="0" y="0" width="' + W + '" height="' + H + '" fill="transparent"/>';
+  svg.innerHTML = g;
+  const tip = $('tip'), show = ev => { // hover or tap shows the value for the nearest day
+    const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / (r.width || W) * W;
+    const i = Math.max(0, Math.min(n - 1, Math.round(((x - L) / (W - L - R)) * (n - 1)))), q = pts[i], cx = X(i), t = $('tipt');
+    tip.style.display = ''; $('tipl').setAttribute('x1', cx); $('tipl').setAttribute('x2', cx); $('tipc').setAttribute('cx', cx); $('tipc').setAttribute('cy', Y(q.v));
+    t.textContent = prettyDay(q.d) + ': ' + q.v; t.setAttribute('x', cx > W / 2 ? cx - 8 : cx + 8); t.setAttribute('text-anchor', cx > W / 2 ? 'end' : 'start'); t.setAttribute('y', T + 10);
+  };
+  $('hit').onpointermove = show; $('hit').onpointerdown = show; $('hit').onpointerleave = () => { tip.style.display = 'none'; };
+  note.textContent = (metric === 'total' ? 'Different people who have played' : metric === 'new' ? 'People playing for the first time' : 'Finished games') + ', counted since ' + prettyDay(s.dataStart) + '. Latest: ' + pts[n - 1].v + '.';
+}
+document.querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { metric = b.dataset.m; document.querySelectorAll('button[data-m]').forEach(x => x.classList.toggle('on', x === b)); drawChart(); });
+document.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => { chartDays = +b.dataset.r; custom = false; document.querySelectorAll('button[data-r]').forEach(x => x.classList.toggle('on', x === b)); drawChart(); });
+['from', 'to'].forEach(id => { $(id).onchange = () => { custom = true; document.querySelectorAll('button[data-r]').forEach(x => x.classList.remove('on')); drawChart(); }; });
+addEventListener('resize', () => { if (days.length || people) drawChart(); });
+
 async function start() {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   try { // which dinos have a page: read the game file next to this one
@@ -68,6 +148,7 @@ async function start() {
   try { days = (await firebase.firestore().collection('guessStats').get()).docs.map(d => Object.assign({ id: d.id }, d.data())); }
   catch (e) { $('summary').textContent = 'Could not load the counts (have the Firestore rules been updated?).'; return; }
   players = await loadPlayers(new Date().toISOString().slice(0, 10));
+  loadPeopleHistory().then(p => { people = p; }).catch(e => { peopleErr = e.message; }).then(drawChart);
   render();
 }
 document.querySelectorAll('button[data-days]').forEach(b => b.onclick = () => { range = +b.dataset.days; document.querySelectorAll('button[data-days]').forEach(x => x.classList.toggle('on', x === b)); render(); });
