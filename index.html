@@ -429,6 +429,8 @@ function playerId() { // random id kept in this browser only, so one person on t
     return id;
   } catch (e) { return null; }
 }
+// has this browser already been added to today's "people" count?
+function countedToday() { try { return localStorage.getItem('dinotree_pday') === todayStr(); } catch (e) { return true; } }
 function recordGame() {
   if (S.counted) return; S.counted = true;
   const names = S.guesses.map(g => g.name).concat(S.won ? [S.target.name] : []);
@@ -437,8 +439,10 @@ function recordGame() {
     const inc = () => firebase.firestore.FieldValue.increment(1), all = {};
     names.forEach(n => { all[n] = inc(); });
     const pid = playerId(); // second small write so stats.html can count players
+    const addPerson = pid && !countedToday(); // once per browser per day, for the daily people chart
+    if (addPerson) { try { localStorage.setItem('dinotree_pday', todayStr()); } catch (e) {} }
     return Promise.all([
-      db.collection('guessStats').doc(todayStr()).set({ games: inc(), first: { [names[0]]: inc() }, all }, { merge: true }),
+      db.collection('guessStats').doc(todayStr()).set(Object.assign({ games: inc(), first: { [names[0]]: inc() }, all }, addPerson ? { people: inc() } : {}), { merge: true }),
       pid ? db.collection('players').doc(pid).set({ last: todayStr(), games: inc() }, { merge: true }) : null
     ]);
   }).catch(() => {});
