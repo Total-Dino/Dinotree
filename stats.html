@@ -25,7 +25,7 @@ input[type=date]{background:#000;color:#00cc00;border:1px solid #00aa00;padding:
 <h1>DinoTree: what players guess</h1>
 <div id="summary">Loading...</div>
 <div id="chart-box">
-<div class="bar"><button data-m="total" class="on">Total people</button><button data-m="new">New people / day</button><button data-m="games">Games / day</button></div>
+<div class="bar"><button data-m="people" class="on">People / day</button><button data-m="total">Total people</button><button data-m="new">New people / day</button><button data-m="games">Games / day</button></div>
 <svg id="chart" viewBox="0 0 340 230"></svg>
 <div id="chart-note">Loading...</div>
 <div class="bar"><button data-r="7">7 days</button><button data-r="30" class="on">30 days</button><button data-r="90">90 days</button><button data-r="0">All</button></div>
@@ -73,7 +73,7 @@ function render() {
   $('rows').innerHTML = shown.slice(0, 100).map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + r.n.replace(/[<>&"]/g, '') + (r.n === 'Aves' ? ' (bird guesses)' : '') + '</td><td>' + r.first + '</td><td>' + r.share.toFixed(1) + '%</td><td>' + r.all + '</td><td class="' + (pages && !pages.has(r.n) && r.n !== 'Aves' ? 'no' : '') + '">' + (!pages || r.n === 'Aves' ? '' : pages.has(r.n) ? '&#10003;' : 'no') + '</td></tr>').join('');
 }
 // ---- growth chart ----
-let people = null, peopleErr = '', metric = 'total', chartDays = 30, custom = false;
+let people = null, peopleErr = '', metric = 'people', chartDays = 30, custom = false;
 const FB = firebaseConfig;
 const ctDay = t => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // YYYY-MM-DD, Central time
 const shiftDay = (ds, n) => new Date(new Date(ds + 'T00:00:00Z').getTime() + n * 864e5).toISOString().slice(0, 10);
@@ -81,21 +81,26 @@ const prettyDay = ds => new Date(ds + 'T00:00:00Z').toLocaleDateString('en-US', 
 async function loadPeopleHistory() { // the REST api returns createTime (the day each player first appeared), which the SDK hides
   const out = []; let token = '';
   for (let i = 0; i < 50; i++) {
-    const r = await fetch('https://firestore.googleapis.com/v1/projects/' + FB.projectId + '/databases/(default)/documents/players?pageSize=300&mask.fieldPaths=games&key=' + FB.apiKey + (token ? '&pageToken=' + encodeURIComponent(token) : ''));
+    const r = await fetch('https://firestore.googleapis.com/v1/projects/' + FB.projectId + '/databases/(default)/documents/players?pageSize=300&mask.fieldPaths=last&key=' + FB.apiKey + (token ? '&pageToken=' + encodeURIComponent(token) : ''));
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json(); (j.documents || []).forEach(d => out.push(ctDay(d.createTime)));
+    const j = await r.json(); (j.documents || []).forEach(d => out.push({ c: ctDay(d.createTime), l: (d.fields && d.fields.last && d.fields.last.stringValue) || ctDay(d.updateTime) }));
     token = j.nextPageToken || ''; if (!token) break;
   }
   return out;
 }
-function series(m, from, to) { // -> { pts: [{ d, v }], dataStart }, or null if this metric has no data yet
-  const newBy = {}; (people || []).forEach(d => { newBy[d] = (newBy[d] || 0) + 1; });
-  const gamesBy = {}; days.forEach(d => { gamesBy[d.id] = d.games || 0; });
-  const ids = m === 'games' ? days.map(d => d.id) : Object.keys(newBy); if (!ids.length) return null;
+function series(m, from, to) { // -> { pts: [{ d, v, est }], dataStart }, or null if this metric has no data yet
+  const newBy = {}, lb = {}, gamesBy = {}, exactBy = {};
+  (people || []).forEach(p => { newBy[p.c] = (newBy[p.c] || 0) + 1; new Set([p.c, p.l]).forEach(d => { lb[d] = (lb[d] || 0) + 1; }); }); // lb: players whose first or last day is d
+  days.forEach(d => { gamesBy[d.id] = d.games || 0; if (typeof d.people === 'number') exactBy[d.id] = d.people; });
+  const ids = m === 'games' ? days.map(d => d.id) : m === 'people' ? Object.keys(lb).concat(Object.keys(exactBy)) : Object.keys(newBy); if (!ids.length) return null;
   const dataStart = ids.reduce((a, b) => a < b ? a : b), pts = []; let run = 0;
   for (let d = dataStart, k = 0; d <= to && k < 3000; d = shiftDay(d, 1), k++) {
     run += newBy[d] || 0;
-    if (d >= from) pts.push({ d, v: m === 'total' ? run : m === 'new' ? (newBy[d] || 0) : (gamesBy[d] || 0) });
+    if (d < from) continue;
+    let v, est = false;
+    if (m === 'total') v = run; else if (m === 'new') v = newBy[d] || 0; else if (m === 'games') v = gamesBy[d] || 0;
+    else { const ex = exactBy[d] || 0, low = lb[d] || 0; v = Math.max(ex, low); est = low > ex; } // exact count when the game recorded one, else "at least" from player records
+    pts.push({ d, v, est });
   }
   return { pts, dataStart };
 }
@@ -112,7 +117,7 @@ function drawChart() {
   const [from, to] = chartRange(), s = series(metric, from, to);
   const W = Math.max(280, svg.parentNode.clientWidth || 340), H = 230, L = 40, R = 12, T = 14, B = 28;
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  if (metric !== 'games' && !people && peopleErr) { svg.innerHTML = ''; note.textContent = "Couldn't load the player history (" + peopleErr + ")."; return; }
+  if (metric !== 'games' && metric !== 'people' && !people && peopleErr) { svg.innerHTML = ''; note.textContent = "Couldn't load the player history (" + peopleErr + ")."; return; }
   if (!s || !s.pts.length) { svg.innerHTML = ''; note.textContent = 'No data in this range yet.'; return; }
   const pts = s.pts, n = pts.length, top = niceMax(Math.max(...pts.map(q => q.v)));
   const X = i => L + (n > 1 ? i / (n - 1) : .5) * (W - L - R), Y = v => H - B - v / top * (H - T - B);
@@ -122,7 +127,8 @@ function drawChart() {
   xs.forEach((i, k) => { g += '<text x="' + X(i) + '" y="' + (H - 8) + '" text-anchor="' + (n > 1 && k === 0 ? 'start' : n > 1 && k === xs.length - 1 ? 'end' : 'middle') + '" fill="#00aa00" font-size="11">' + prettyDay(pts[i].d) + '</text>'; });
   const line = pts.map((q, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(q.v).toFixed(1)).join('');
   g += '<path d="' + line + 'L' + X(n - 1).toFixed(1) + ',' + Y(0) + 'L' + X(0).toFixed(1) + ',' + Y(0) + 'Z" fill="rgba(0,255,0,.10)"/>';
-  g += '<path id="line" d="' + line + '" fill="none" stroke="#00ff00" stroke-width="2" stroke-linejoin="round"/>';
+  for (let i = 1; i < n; i++) g += '<line class="seg" x1="' + X(i - 1).toFixed(1) + '" y1="' + Y(pts[i - 1].v).toFixed(1) + '" x2="' + X(i).toFixed(1) + '" y2="' + Y(pts[i].v).toFixed(1) + '" stroke="#00ff00" stroke-width="2" stroke-linecap="round"' + (pts[i].est || pts[i - 1].est ? ' stroke-dasharray="5 4" opacity=".7"' : '') + '/>'; // dashed = "at least"
+  g += '<path id="line" d="' + line + '" fill="none" stroke="none"/>';
   if (n <= 45) pts.forEach((q, i) => { g += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(q.v).toFixed(1) + '" r="3" fill="#00ff00"/>'; });
   g += '<g id="tip" style="display:none"><line id="tipl" y1="' + T + '" y2="' + (H - B) + '" stroke="#006600"/><circle id="tipc" r="5" fill="#000" stroke="#ffd633" stroke-width="2"/><text id="tipt" fill="#ffd633" font-size="12" font-weight="bold"></text></g><rect id="hit" x="0" y="0" width="' + W + '" height="' + H + '" fill="transparent"/>';
   svg.innerHTML = g;
@@ -130,10 +136,10 @@ function drawChart() {
     const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / (r.width || W) * W;
     const i = Math.max(0, Math.min(n - 1, Math.round(((x - L) / (W - L - R)) * (n - 1)))), q = pts[i], cx = X(i), t = $('tipt');
     tip.style.display = ''; $('tipl').setAttribute('x1', cx); $('tipl').setAttribute('x2', cx); $('tipc').setAttribute('cx', cx); $('tipc').setAttribute('cy', Y(q.v));
-    t.textContent = prettyDay(q.d) + ': ' + q.v; t.setAttribute('x', cx > W / 2 ? cx - 8 : cx + 8); t.setAttribute('text-anchor', cx > W / 2 ? 'end' : 'start'); t.setAttribute('y', T + 10);
+    t.textContent = prettyDay(q.d) + ': ' + (q.est ? 'at least ' : '') + q.v; t.setAttribute('x', cx > W / 2 ? cx - 8 : cx + 8); t.setAttribute('text-anchor', cx > W / 2 ? 'end' : 'start'); t.setAttribute('y', T + 10);
   };
   $('hit').onpointermove = show; $('hit').onpointerdown = show; $('hit').onpointerleave = () => { tip.style.display = 'none'; };
-  note.textContent = (metric === 'total' ? 'Different people who have played' : metric === 'new' ? 'People playing for the first time' : 'Finished games') + ', counted since ' + prettyDay(s.dataStart) + '. Latest: ' + pts[n - 1].v + '.';
+  note.textContent = (metric === 'people' ? 'Different browsers that played each day' : metric === 'total' ? 'Different people who have played' : metric === 'new' ? 'People playing for the first time' : 'Finished games') + ', counted since ' + prettyDay(s.dataStart) + '. Latest: ' + pts[n - 1].v + '.' + (pts.some(q => q.est) ? ' Dashed = at least this many (older days).' : '');
 }
 document.querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { metric = b.dataset.m; document.querySelectorAll('button[data-m]').forEach(x => x.classList.toggle('on', x === b)); drawChart(); });
 document.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => { chartDays = +b.dataset.r; custom = false; document.querySelectorAll('button[data-r]').forEach(x => x.classList.toggle('on', x === b)); drawChart(); });
