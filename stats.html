@@ -23,6 +23,8 @@ th[data-k].sorted::after{content:' \25BE'}
 input[type=date]{background:#000;color:#00cc00;border:1px solid #00aa00;padding:4px 6px;font:inherit;color-scheme:dark}
 </style></head><body>
 <h1>DinoTree: what players guess</h1>
+<div class="bar" id="tabs"><button data-v="main" class="on">Guesses and players</button><button data-v="missed">Missed guesses</button></div>
+<div id="view-main">
 <div id="summary">Loading...</div>
 <div id="chart-box">
 <div class="bar"><button data-m="people" class="on">People / day</button><button data-m="total">Total people</button><button data-m="new">New people / day</button><button data-m="games">Games / day</button></div>
@@ -35,6 +37,12 @@ input[type=date]{background:#000;color:#00cc00;border:1px solid #00aa00;padding:
 <label><input type="checkbox" id="nopage"> only dinos with no page yet</label></div>
 <div class="wrap"><table><thead><tr><th>#</th><th>Dino</th><th data-k="first" title="Games that opened with this dino">Opened</th><th data-k="share" title="Share of games that opened with it">%</th><th data-k="all" title="Every guess">All</th><th>Page</th></tr></thead><tbody id="rows"></tbody></table></div>
 <p style="color:#006600;font-size:12px">Counts only finished games. "Different people" means different browsers (someone on two devices counts twice) and only counts since this feature went live. Chart days are Central time. Opened = games that began with this dino; % = share of games; All = every guess; tap a heading to sort. "Opened" is the best sign of which dinos people already know, because nothing has influenced a first guess yet.</p>
+</div>
+<div id="view-missed" style="display:none">
+<div class="bar"><button data-miss="count" class="on">Most tried</button><button data-miss="last">Most recent</button></div>
+<div id="miss-note" style="color:#00aa00;font-size:14px;margin-bottom:6px">Loading...</div>
+<div class="wrap"><table><thead><tr><th>#</th><th>What they typed</th><th>Visits</th><th>Last tried</th></tr></thead><tbody id="miss-rows"></tbody></table></div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
@@ -145,6 +153,30 @@ document.querySelectorAll('button[data-m]').forEach(b => b.onclick = () => { met
 document.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => { chartDays = +b.dataset.r; custom = false; document.querySelectorAll('button[data-r]').forEach(x => x.classList.toggle('on', x === b)); drawChart(); });
 ['from', 'to'].forEach(id => { $(id).onchange = () => { custom = true; document.querySelectorAll('button[data-r]').forEach(x => x.classList.remove('on')); drawChart(); }; });
 addEventListener('resize', () => { if (days.length || people) drawChart(); });
+
+let missMode = 'count';
+async function loadMissed() {
+  const note = $('miss-note'), body = $('miss-rows');
+  note.textContent = 'Loading...';
+  try {
+    const snap = await firebase.firestore().collection('missed').orderBy(missMode, 'desc').limit(100).get();
+    const rows = snap.docs.map(d => { const v = d.data(); return { term: d.id.replace(/_/g, ' '), count: v.count || 0, last: v.last ? ctDay(v.last.toDate()) : '' }; });
+    note.textContent = rows.length ? 'Each name is counted once per visit. Showing up to 100.' : 'Nothing logged yet.';
+    body.innerHTML = rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + r.term.replace(/[<>&"]/g, '') + '</td><td>' + r.count + '</td><td>' + (r.last ? prettyDay(r.last) : '') + '</td></tr>').join('');
+  } catch (e) {
+    body.innerHTML = '';
+    note.textContent = "Couldn't load the missed guesses. The Firestore rules may not allow reading the missed collection.";
+  }
+}
+document.querySelectorAll('button[data-miss]').forEach(b => b.onclick = () => { missMode = b.dataset.miss; document.querySelectorAll('button[data-miss]').forEach(x => x.classList.toggle('on', x === b)); loadMissed(); });
+
+document.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => {
+  const v = b.dataset.v;
+  document.querySelectorAll('button[data-v]').forEach(x => x.classList.toggle('on', x === b));
+  $('view-main').style.display = v === 'main' ? '' : 'none';
+  $('view-missed').style.display = v === 'missed' ? '' : 'none';
+  if (v === 'missed') loadMissed(); else if (days.length || people) drawChart();
+});
 
 async function start() {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
