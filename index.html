@@ -119,6 +119,7 @@ svg{display:block;margin:0 auto}
 /* phones only: the AdSense anchor ad covers the bottom of the screen, so keep the tree and the pop-ups above it. change --ad-safe to adjust the reserved height. desktop uses side ads and is left alone. */
 @media(pointer:coarse){
   :root{--ad-safe:160px}
+  html.kb-open{--ad-safe:0px}
   #tree-wrap{padding-bottom:calc(var(--ad-safe) + 8px)}
   #overlay{padding:12px 0 calc(var(--ad-safe) + 12px)}
   #board-overlay,#clade-overlay{padding-bottom:calc(var(--ad-safe) + 12px)}
@@ -678,6 +679,12 @@ function positionTreeWrap() {
   const extraGap = window.matchMedia('(pointer: fine)').matches ? 32 : 16;
   treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + extraGap) + 'px';
 }
+
+// phones: while a text box is focused the keyboard covers the ad and the frame gets short, so drop the ad safe zone
+document.addEventListener('focusin', e => {
+  if (e.target.matches && e.target.matches('input, textarea')) document.documentElement.classList.add('kb-open');
+});
+document.addEventListener('focusout', () => document.documentElement.classList.remove('kb-open'));
 
 // tells the parent page (the Wix iframe host) when the search box gains or loses focus, so it can hold its scroll
 // while the keyboard opens. does nothing if this file is opened outside the iframe.
