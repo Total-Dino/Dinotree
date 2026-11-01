@@ -116,6 +116,14 @@ svg{display:block;margin:0 auto}
 .lt{fill:#aa2200;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-style:italic}.tt{fill:#00ff00;font-family:Calibri,"Segoe UI",Arial,sans-serif;font-weight:bold}.nnew{opacity:0}
 #v-sub a{color:#00ff00;text-decoration:underline;cursor:pointer}
 #v-sub a:hover{color:#66ff66}
+/* phones only: the AdSense anchor ad covers the bottom of the screen, so keep the tree and the pop-ups above it. change --ad-safe to adjust the reserved height. desktop uses side ads and is left alone. */
+@media(pointer:coarse){
+  :root{--ad-safe:160px}
+  #tree-wrap{padding-bottom:calc(var(--ad-safe) + 8px)}
+  #overlay{padding:12px 0 calc(var(--ad-safe) + 12px)}
+  #board-overlay,#clade-overlay{padding-bottom:calc(var(--ad-safe) + 12px)}
+  #vbox,#board-box,#clade-box{max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+}
 </style>
 </head>
 <body>
