@@ -120,6 +120,9 @@ svg{display:block;margin:0 auto}
 @media(pointer:coarse){
   :root{--ad-safe:100px}
   html.kb-open{--ad-safe:0px}
+  /* name box open: pin the high scores pop-up to the top so the keyboard does not cover it */
+  html.kb-open #board-overlay{align-items:flex-start}
+  html.kb-open #board-box{max-height:46%}
   #tree-wrap{padding-bottom:calc(var(--ad-safe) + 8px)}
   #overlay{padding:12px 0 calc(var(--ad-safe) + 12px)}
   #board-overlay,#clade-overlay{padding-bottom:calc(var(--ad-safe) + 12px)}
