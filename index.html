@@ -118,12 +118,18 @@ svg{display:block;margin:0 auto}
 #v-sub a:hover{color:#66ff66}
 /* phones only: the AdSense anchor ad covers the bottom of the screen, so keep the tree and the pop-ups above it. change --ad-safe to adjust the reserved height. desktop uses side ads and is left alone. */
 @media(pointer:coarse){
-  :root{--ad-safe:160px}
+  :root{--ad-safe:100px}
   html.kb-open{--ad-safe:0px}
   #tree-wrap{padding-bottom:calc(var(--ad-safe) + 8px)}
   #overlay{padding:12px 0 calc(var(--ad-safe) + 12px)}
   #board-overlay,#clade-overlay{padding-bottom:calc(var(--ad-safe) + 12px)}
   #vbox,#board-box,#clade-box{max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* tighter victory box so everything shows without scrolling */
+  #vbox{padding:16px 22px 8px}
+  #v-art-wrap{margin:2px 0}
+  #vbox .vsub{margin-bottom:4px;line-height:1.35}
+  #vbox a.vlink{margin-top:8px}
+  #v-share-row{margin-top:10px}
 }
 </style>
 </head>
@@ -579,7 +585,7 @@ function showBoard(withEntry) {
   initialsEl.disabled = false;
   document.getElementById('board-overlay').classList.add('show');
   loadHighScores();
-  if (withEntry && !already) initialsEl.focus();
+  if (withEntry && !already) { notifyDinotreeKeyboard(true); initialsEl.focus(); }
 }
 function hideBoard() {
   document.getElementById('board-overlay').classList.remove('show');
@@ -601,6 +607,7 @@ async function submitScore() {
   const initials = el.value.trim().slice(0, 10);
   if (!initials) return;
   if (isBlockedInitials(initials)) { errEl.textContent = "That name isn't allowed - please try another."; errEl.style.display = 'block'; return; }
+  el.blur(); // a disabled box may not fire blur, so release the keyboard first
   btn.disabled = true;
   el.disabled = true;
   try {
@@ -680,11 +687,17 @@ function positionTreeWrap() {
   treeWrapEl.style.paddingTop = (topbarEl.offsetHeight + extraGap) + 'px';
 }
 
-// phones: while a text box is focused the keyboard covers the ad and the frame gets short, so drop the ad safe zone
+// high score name box: the keyboard covers the ad and the frame gets short, so drop the ad safe zone while it is focused.
+// it is focused by code (not a tap), so tell the host page about its keyboard too, or iOS leaves the page scrolled.
 document.addEventListener('focusin', e => {
-  if (e.target.matches && e.target.matches('input, textarea')) document.documentElement.classList.add('kb-open');
+  if (e.target.id === 'board-initials') document.documentElement.classList.add('kb-open');
 });
-document.addEventListener('focusout', () => document.documentElement.classList.remove('kb-open'));
+document.addEventListener('focusout', e => {
+  if (e.target.id !== 'board-initials') return;
+  document.documentElement.classList.remove('kb-open');
+  notifyDinotreeKeyboard(false);
+  notifyDinotreeDock();
+});
 
 // tells the parent page (the Wix iframe host) when the search box gains or loses focus, so it can hold its scroll
 // while the keyboard opens. does nothing if this file is opened outside the iframe.
@@ -1511,20 +1524,43 @@ function renderTree() {
 
   prevVW = VW; prevVH = VH;
 
-  // after a guess, scroll so the start of the new growth sits near the top of the tree area. simpler than working
-  // out what the keyboard hides, and since the keyboard covers the bottom, new growth at the top clears it too.
+  // after a guess, scroll only as much as needed to keep the new growth above the ad zone and below the buttons.
+  // if it already fits on screen the tree stays put. the scroll eases along with the canvas growth (1s tween).
   if (!firstRender) {
-    const newYs = [];
+    let newTop = Infinity, newBottom = -Infinity;
     svg.querySelectorAll('.nnew').forEach(el => {
-      const yAttr = el.getAttribute('y');
-      if (yAttr !== null) newYs.push(parseFloat(yAttr));
+      if (el.getAttribute('y') === null) return;
+      const bb = el.getBBox();
+      newTop = Math.min(newTop, bb.y);
+      newBottom = Math.max(newBottom, bb.y + bb.height);
     });
-    if (newYs.length > 0) {
-      const newTop = Math.min(...newYs);
-      const PAD = 20;
-      // wait a moment: the keyboard collapse animates for ~200ms and scrolling sooner measures the keyboard-up layout
+    if (newTop !== Infinity) {
+      const gen = renderGen;
+      // wait a moment: the keyboard collapse animates for ~200ms and measuring sooner sees the keyboard-up layout
       setTimeout(() => {
-        treeWrapEl.scrollTo({ top: Math.max(0, newTop - PAD), behavior: 'smooth' });
+        if (gen !== renderGen) return;
+        const cs = getComputedStyle(treeWrapEl);
+        const padTop = parseFloat(cs.paddingTop) || 0, padBot = parseFloat(cs.paddingBottom) || 0;
+        const PAD = 20;
+        const st = treeWrapEl.scrollTop;
+        const visBottom = st + treeWrapEl.clientHeight - padBot;
+        let target = st;
+        if (padTop + newBottom + PAD > visBottom) target = st + (padTop + newBottom + PAD - visBottom);
+        target = Math.max(0, Math.min(target, newTop - PAD));
+        if (Math.abs(target - st) < 2) return;
+        const t0 = performance.now(), D = 850;
+        let cancelled = false;
+        const stop = () => { cancelled = true; };
+        treeWrapEl.addEventListener('touchstart', stop, { once: true, passive: true });
+        treeWrapEl.addEventListener('wheel', stop, { once: true, passive: true });
+        const step = now => {
+          if (cancelled || gen !== renderGen) return;
+          const raw = Math.min(1, (now - t0) / D);
+          const e = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+          treeWrapEl.scrollTop = st + (target - st) * e;
+          if (raw < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
       }, 150);
     }
   }
