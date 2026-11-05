@@ -120,6 +120,8 @@ svg{display:block;margin:0 auto}
 @media(pointer:coarse){
   :root{--ad-safe:100px}
   html.kb-open{--ad-safe:0px}
+  /* guess box focused: the keyboard hides the bottom of the frame, so add scroll room to bring the tree above it */
+  html.kb-guess #tree-wrap{padding-bottom:55vh}
   /* name box open: pin the high scores pop-up to the top so the keyboard does not cover it */
   html.kb-open #board-overlay{align-items:flex-start}
   html.kb-open #board-box{max-height:46%}
@@ -692,10 +694,13 @@ function positionTreeWrap() {
 
 // high score name box: the keyboard covers the ad and the frame gets short, so drop the ad safe zone while it is focused.
 // it is focused by code (not a tap), so tell the host page about its keyboard too, or iOS leaves the page scrolled.
+// guess box: flag it so the css can add scroll room under the tree while the keyboard is up.
 document.addEventListener('focusin', e => {
   if (e.target.id === 'board-initials') document.documentElement.classList.add('kb-open');
+  if (e.target.id === 'guess-input') document.documentElement.classList.add('kb-guess');
 });
 document.addEventListener('focusout', e => {
+  if (e.target.id === 'guess-input') document.documentElement.classList.remove('kb-guess');
   if (e.target.id !== 'board-initials') return;
   document.documentElement.classList.remove('kb-open');
   notifyDinotreeKeyboard(false);
