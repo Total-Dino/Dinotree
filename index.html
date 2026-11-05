@@ -130,9 +130,10 @@ svg{display:block;margin:0 auto}
   #board-overlay,#clade-overlay{padding-bottom:calc(var(--ad-safe) + 12px)}
   #vbox,#board-box,#clade-box{max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
   /* tighter victory box so everything shows without scrolling */
-  #vbox{padding:16px 22px 8px}
+  #vbox{padding:16px 14px 8px}
   #v-art-wrap{margin:2px 0}
   #vbox .vsub{margin-bottom:4px;line-height:1.35}
+  #vbox #v-sub{font-size:clamp(10px,2.85vw,12px)} /* keeps the found-in line on one row */
   #vbox a.vlink{margin-top:8px}
   #v-share-row{margin-top:10px}
 }
